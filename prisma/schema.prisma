@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String   @unique
+  role       String   @default("user") // "user" | "admin"
+  full_name  String?
+  avatar_url String?
+  is_banned  Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  histories UserHistory[]
+
+  @@map("profiles")
+}
+
+model Hexagram {
+  id            Int     @id // 1-64
+  name          String
+  chinese_name  String
+  meaning       String
+  image_url     String?
+  trigram_above String
+  trigram_below String
+  description   String  @db.Text
+
+  main_histories     UserHistory[] @relation("MainHexagram")
+  changing_histories UserHistory[] @relation("ChangingHexagram")
+
+  @@map("hexagrams")
+}
+
+model ApiConfig {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  provider  String   // "gemini" | "openai" | "custom"
+  base_url  String
+  api_key   String
+  headers   Json?
+  status    String   @default("inactive") // "active" | "inactive"
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("api_configs")
+}
+
+model UserHistory {
+  id                   String    @id @default(uuid()) @db.Uuid
+  user_id              String    @db.Uuid
+  question             String    @db.Text
+  main_hexagram_id     Int
+  changing_hexagram_id Int?
+  changing_lines       Json      @default("[]") // array of line positions
+  ai_response          String    @db.Text
+  created_at           DateTime  @default(now())
+
+  profile              Profile   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  main_hexagram        Hexagram  @relation("MainHexagram", fields: [main_hexagram_id], references: [id])
+  changing_hexagram    Hexagram? @relation("ChangingHexagram", fields: [changing_hexagram_id], references: [id])
+
+  @@map("user_histories")
+}

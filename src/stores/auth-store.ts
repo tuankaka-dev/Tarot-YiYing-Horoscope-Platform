@@ -1,0 +1,104 @@
+import { create } from 'zustand';
+import { createClient } from '@/lib/supabase/client';
+import type { Profile } from '@/types';
+import type { User } from '@supabase/supabase-js';
+
+interface AuthState {
+    user: User | null;
+    profile: Profile | null;
+    isLoading: boolean;
+
+    // Actions
+    initialize: () => Promise<void>;
+    signIn: (email: string, password: string) => Promise<{ error?: string }>;
+    signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
+    signOut: () => Promise<void>;
+    fetchProfile: () => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+    user: null,
+    profile: null,
+    isLoading: true,
+
+    initialize: async () => {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+            set({ user: session.user });
+            await get().fetchProfile();
+        }
+
+        set({ isLoading: false });
+
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                set({ user: session.user });
+                await get().fetchProfile();
+            } else if (event === 'SIGNED_OUT') {
+                set({ user: null, profile: null });
+            }
+        });
+    },
+
+    signIn: async (email, password) => {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: error.message };
+        return {};
+    },
+
+    signUp: async (email, password, fullName) => {
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: fullName },
+            },
+        });
+        if (error) return { error: error.message };
+
+        // Create profile in our database
+        if (data.user) {
+            try {
+                await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: data.user.id,
+                        email,
+                        full_name: fullName,
+                    }),
+                });
+            } catch (e) {
+                console.error('Failed to create profile:', e);
+            }
+        }
+
+        return {};
+    },
+
+    signOut: async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        set({ user: null, profile: null });
+    },
+
+    fetchProfile: async () => {
+        const { user } = get();
+        if (!user) return;
+
+        try {
+            const response = await fetch(`/api/profile?userId=${user.id}`);
+            if (response.ok) {
+                const profile = await response.json();
+                set({ profile });
+            }
+        } catch (e) {
+            console.error('Failed to fetch profile:', e);
+        }
+    },
+}));
