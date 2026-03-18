@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
@@ -11,12 +12,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User, History, Shield, Sparkles } from 'lucide-react';
+import { LogOut, User, History, Shield, Menu, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function Navbar() {
     const { user, profile, signOut, isLoading } = useAuthStore();
     const router = useRouter();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleSignOut = async () => {
         await signOut();
@@ -38,40 +40,40 @@ export function Navbar() {
                     </Link>
 
                     {/* Navigation */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4">
                         {isLoading ? (
                             <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
                         ) : user ? (
                             <>
-                                <Link href="/divine">
-                                    <Button
-                                        variant="ghost"
-                                        className="gap-2 text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
-                                    >
-                                        <Sparkles className="w-4 h-4" />
-                                        Gieo Quẻ Kinh Dịch
-                                    </Button>
-                                </Link>
-                                <Link href="/null">
-                                    <Button
-                                        variant="ghost"
-                                        className="gap-2 text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
-                                    >
-                                        <Sparkles className="w-4 h-4" />
-                                        Xem Tử Vi
-                                    </Button>
-                                </Link>
-                                <Link href="/null">
-                                    <Button
-                                        variant="ghost"
-                                        className="gap-2 text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
-                                    >
-                                        <Sparkles className="w-4 h-4" />
-                                        Xem Tarot
-                                    </Button>
-                                </Link>
+                                {/* Desktop Links: Hidden on Mobile */}
+                                <div className="hidden md:flex items-center gap-2">
+                                    <Link href="/divine">
+                                        <Button
+                                            variant="ghost"
+                                            className="text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
+                                        >
+                                            Gieo Quẻ Kinh Dịch
+                                        </Button>
+                                    </Link>
+                                    <Link href="/null">
+                                        <Button
+                                            variant="ghost"
+                                            className="text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
+                                        >
+                                            Xem Tử Vi
+                                        </Button>
+                                    </Link>
+                                    <Link href="/null">
+                                        <Button
+                                            variant="ghost"
+                                            className="text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
+                                        >
+                                            Xem Tarot
+                                        </Button>
+                                    </Link>
+                                </div>
 
-
+                                {/* Avatar Menu */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger className="relative h-9 w-9 rounded-full cursor-pointer focus:outline-none">
                                         <Avatar className="h-9 w-9 border border-mystic-gold/30">
@@ -125,10 +127,19 @@ export function Navbar() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+
+                                {/* Mobile Hamburger Menu Toggle */}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="md:hidden text-mystic-gold hover:bg-mystic-gold/10"
+                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                >
+                                    {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                                </Button>
                             </>
                         ) : (
                             <>
-
                                 <Link href="/register">
                                     <Button className="bg-gradient-to-r from-mystic-gold to-amber-600 hover:from-mystic-gold/90 hover:to-amber-600/90 text-white">
                                         Bắt Đầu
@@ -138,6 +149,36 @@ export function Navbar() {
                         )}
                     </div>
                 </div>
+
+                {/* Mobile Navigation Panel */}
+                {isMobileMenuOpen && user && (
+                    <div className="md:hidden py-4 border-t border-mystic-gold/10 flex flex-col gap-2 animate-in slide-in-from-top-4 fade-in-50 duration-200">
+                        <Link href="/divine" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10 text-lg py-6"
+                            >
+                                Gieo Quẻ Kinh Dịch
+                            </Button>
+                        </Link>
+                        <Link href="/null" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10 text-lg py-6"
+                            >
+                                Xem Tử Vi
+                            </Button>
+                        </Link>
+                        <Link href="/null" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-start text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10 text-lg py-6"
+                            >
+                                Xem Tarot
+                            </Button>
+                        </Link>
+                    </div>
+                )}
             </div>
         </nav>
     );

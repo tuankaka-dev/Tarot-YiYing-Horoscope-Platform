@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { History, Trash2, ChevronDown, ChevronUp, Sparkles, BookOpen } from 'lucide-react';
+import { History, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -69,19 +69,18 @@ export default function DashboardPage() {
         <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
-                            <History className="w-8 h-8" />
+                        <h1 className="text-2xl md:text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
+                            <History className="w-6 h-6 md:w-8 md:h-8" />
                             Lịch Sử Gieo Quẻ
                         </h1>
-                        <p className="text-muted-foreground">
+                        <p className="text-sm md:text-base text-muted-foreground">
                             {histories.length} lần gieo quẻ đã được ghi lại
                         </p>
                     </div>
-                    <Link href="/divine">
-                        <Button className="gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 text-white">
-                            <Sparkles className="w-4 h-4" />
+                    <Link href="/divine" className="w-full sm:w-auto">
+                        <Button className="w-full gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 text-white">
                             Gieo Quẻ Mới
                         </Button>
                     </Link>
@@ -103,8 +102,7 @@ export default function DashboardPage() {
                         </p>
                         <Link href="/divine">
                             <Button className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 text-black font-semibold">
-                                <Sparkles className="w-4 h-4" />
-                                Gieo Quẻ Đầu Tiên
+                                    Gieo Quẻ Đầu Tiên
                             </Button>
                         </Link>
                     </Card>

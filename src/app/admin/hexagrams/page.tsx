@@ -22,7 +22,26 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Search, Edit, Loader2, BookOpen } from 'lucide-react';
+import { Search, Edit, Loader2, BookOpen, Eye } from 'lucide-react';
+
+function getDriveEmbedUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    let fileId: string | null = null;
+    const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+        fileId = fileIdMatch[1];
+    } else {
+        const idParamMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (idParamMatch && idParamMatch[1]) {
+            fileId = idParamMatch[1];
+        } else if (url.includes('drive.google.com') && url.includes('id=')) {
+            const extractId = url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (extractId && extractId[1]) fileId = extractId[1];
+        }
+    }
+    if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    return url;
+}
 import { toast } from 'sonner';
 
 interface Hexagram {
@@ -33,6 +52,7 @@ interface Hexagram {
     description: string;
     trigram_above: string;
     trigram_below: string;
+    image_url?: string;
 }
 
 export default function AdminHexagramsPage() {
@@ -40,6 +60,7 @@ export default function AdminHexagramsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [editingHex, setEditingHex] = useState<Hexagram | null>(null);
+    const [previewHex, setPreviewHex] = useState<Hexagram | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
@@ -156,15 +177,24 @@ export default function AdminHexagramsPage() {
                                             <TableCell className="hidden sm:table-cell text-sm truncate max-w-[300px]" title={hex.meaning}>
                                                 {hex.meaning}
                                             </TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setPreviewHex(hex)}
+                                                    className="text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10 mr-1"
+                                                >
+                                                    <Eye className="w-4 h-4 mr-1 md:mr-2" />
+                                                    <span className="hidden md:inline">Xem</span>
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => setEditingHex(hex)}
                                                     className="text-mystic-purple hover:text-mystic-purple/80 hover:bg-mystic-purple/10"
                                                 >
-                                                    <Edit className="w-4 h-4 mr-2" />
-                                                    Sửa
+                                                    <Edit className="w-4 h-4 mr-1 md:mr-2" />
+                                                    <span className="hidden md:inline">Sửa</span>
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -250,6 +280,16 @@ export default function AdminHexagramsPage() {
                                 </div>
 
                                 <div className="space-y-2">
+                                    <Label htmlFor="image_url">Link Ảnh Google Drive (Bổ sung)</Label>
+                                    <Input
+                                        id="image_url"
+                                        placeholder="https://drive.google.com/file/d/.../view"
+                                        value={editingHex.image_url || ''}
+                                        onChange={(e) => setEditingHex({ ...editingHex, image_url: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
                                     <Label htmlFor="description">Mô Tả Chi Tiết</Label>
                                     <Textarea
                                         id="description"
@@ -277,6 +317,43 @@ export default function AdminHexagramsPage() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={!!previewHex} onOpenChange={(open) => !open && setPreviewHex(null)}>
+                <DialogContent className="sm:max-w-[400px] bg-card/95 backdrop-blur-xl border-mystic-gold/20 text-center">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl text-mystic-gold">Xem Trước Hiển Thị</DialogTitle>
+                        <DialogDescription className="hidden">Bản xem trước giao diện hiển thị hình ảnh thẻ quẻ</DialogDescription>
+                    </DialogHeader>
+                    {previewHex && (
+                        <div className="py-2 space-y-4 max-h-[70vh] overflow-y-auto px-2">
+                            <div className="text-2xl font-bold text-mystic-gold">
+                                {previewHex.name}
+                            </div>
+                            <p className="text-sm font-medium text-foreground/70">
+                                {previewHex.trigram_above} và {previewHex.trigram_below}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">{previewHex.meaning}</p>
+                            
+                            {previewHex.image_url && (
+                                <div className="mt-4 flex justify-center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img 
+                                        src={getDriveEmbedUrl(previewHex.image_url) || ''} 
+                                        alt={previewHex.name}
+                                        className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm mx-auto"
+                                    />
+                                </div>
+                            )}
+
+                            <p className="text-sm text-muted-foreground mt-4 text-justify leading-relaxed whitespace-pre-wrap">
+                                {previewHex.description}
+                            </p>
+                        </div>
+                    )}
+                    <DialogFooter className="mt-4">
+                        <Button onClick={() => setPreviewHex(null)} className="w-full bg-mystic-gold/20 hover:bg-mystic-gold/30 text-mystic-gold">Đóng</Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { id, name, chinese_name, meaning, description, trigram_above, trigram_below } = body;
+        const { id, name, chinese_name, meaning, description, trigram_above, trigram_below, image_url } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'Missing hexagram id' }, { status: 400 });
@@ -58,6 +58,7 @@ export async function PUT(request: NextRequest) {
                 ...(description !== undefined && { description }),
                 ...(trigram_above !== undefined && { trigram_above }),
                 ...(trigram_below !== undefined && { trigram_below }),
+                ...(image_url !== undefined && { image_url }),
             },
         });
 

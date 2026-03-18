@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Sparkles, BookOpen, Shield, Zap } from 'lucide-react';
+import { BookOpen, Shield, Zap } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
 const trigrams = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
@@ -83,7 +83,6 @@ export default function LandingPage() {
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 hover:from-mystic-gold/90 hover:to-amber-600/90 text-white font-semibold h-14 px-10 text-lg gold-glow"
               >
-                <Sparkles className="w-5 h-5" />
                 Bắt Đầu Gieo Quẻ
               </Button>
             </Link>
@@ -124,7 +123,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: Sparkles,
+                icon: Zap,
                 title: 'Phương Pháp Tung Xu Truyền Thống',
                 description:
                   'Tung 3 đồng xu 6 lần, đúng như các bậc hiền triết đã thực hành hàng nghìn năm. Xem quẻ dịch hình thành từng hào một.',
@@ -183,7 +182,6 @@ export default function LandingPage() {
               size="lg"
               className="gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 hover:from-mystic-gold/90 hover:to-amber-600/90 text-white font-semibold h-14 px-10 text-lg gold-glow"
             >
-              <Sparkles className="w-5 h-5" />
               Gieo Quẻ Ngay
             </Button>
           </Link>

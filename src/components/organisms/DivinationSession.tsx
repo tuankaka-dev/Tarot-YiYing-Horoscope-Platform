@@ -7,10 +7,36 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { HexagramDisplay } from '@/components/molecules/HexagramDisplay';
+import { DivinationTube } from '@/components/molecules/DivinationTube';
 import { useAuthStore } from '@/stores/auth-store';
 import { tossThreeCoins, buildDivination } from '@/lib/divination';
 import type { Hexagram, LineType, CoinTossResult } from '@/types';
-import { Sparkles, Loader2, RotateCcw, Send } from 'lucide-react';
+import { Loader2, RotateCcw, Send } from 'lucide-react';
+
+function getDriveEmbedUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    let fileId: string | null = null;
+    
+    // Extract file ID from various Google Drive link formats
+    const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+        fileId = fileIdMatch[1];
+    } else {
+        const idParamMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (idParamMatch && idParamMatch[1]) {
+            fileId = idParamMatch[1];
+        } else if (url.includes('drive.google.com') && url.includes('id=')) {
+            const extractId = url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (extractId && extractId[1]) fileId = extractId[1];
+        }
+    }
+
+    if (fileId) {
+        // Fallback robust endpoint for displaying images (circumvents strict viewing limitations)
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    return url;
+}
 
 interface DivinationSessionProps {
     hexagrams: Hexagram[];
@@ -177,7 +203,6 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         disabled={!question.trim()}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        <Sparkles className="w-5 h-5" />
                                         Bắt Đầu Gieo Quẻ
                                     </Button>
                                 </CardContent>
@@ -205,48 +230,8 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                     </div>
 
                                     {/* Shaking divination box */}
-                                    <div className="flex justify-center py-4">
-                                        <motion.div
-                                            className="relative w-56 h-56 md:w-72 md:h-72"
-                                            animate={isShaking ? {
-                                                rotate: [-8, 8, -6, 6, -10, 10, -5, 5, -8, 8, 0],
-                                                x: [-5, 5, -8, 8, -3, 3, -6, 6, -2, 2, 0],
-                                                y: [-2, 2, -3, 3, -1, 1, -2, 2, 0],
-                                            } : {}}
-                                            transition={{ duration: 2.5, ease: "easeInOut" }}
-                                        >
-                                            <Image
-                                                src="/divination-box.png"
-                                                alt="Ống thẻ gieo quẻ"
-                                                fill
-                                                className="object-contain drop-shadow-[0_0_30px_rgba(212,165,116,0.4)]"
-                                                priority
-                                            />
-
-                                            {/* Floating trigram symbols */}
-                                            {['☰', '☱', '☲', '☳', '☴', '☵'].map((t, i) => (
-                                                <motion.span
-                                                    key={i}
-                                                    className="absolute text-mystic-gold/40 text-2xl font-bold select-none"
-                                                    style={{
-                                                        left: `${20 + Math.cos(i * Math.PI / 3) * 45}%`,
-                                                        top: `${20 + Math.sin(i * Math.PI / 3) * 45}%`,
-                                                    }}
-                                                    animate={{
-                                                        opacity: [0, 0.6, 0],
-                                                        scale: [0.5, 1.2, 0.5],
-                                                        y: [0, -15, 0],
-                                                    }}
-                                                    transition={{
-                                                        duration: 1.5,
-                                                        repeat: Infinity,
-                                                        delay: i * 0.3,
-                                                    }}
-                                                >
-                                                    {t}
-                                                </motion.span>
-                                            ))}
-                                        </motion.div>
+                                    <div className="flex justify-center py-8">
+                                        <DivinationTube isShaking={isShaking} />
                                     </div>
 
                                     {/* Progress dots */}
@@ -347,7 +332,16 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                     </p>
                                                     <p className="text-xs text-muted-foreground mt-1">{mainHexagram.meaning}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">{mainHexagram.description}</p>
-
+                                                    {mainHexagram.image_url && (
+                                                        <div className="mt-4 flex justify-center">
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img 
+                                                                src={getDriveEmbedUrl(mainHexagram.image_url) || ''} 
+                                                                alt={mainHexagram.name}
+                                                                className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -370,7 +364,16 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                         </p>
                                                         <p className="text-xs text-muted-foreground mt-1">{changingHexagram.meaning}</p>
                                                         <p className="text-xs text-muted-foreground mt-1">{changingHexagram.description}</p>
-
+                                                        {changingHexagram.image_url && (
+                                                            <div className="mt-4 flex justify-center">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img 
+                                                                    src={getDriveEmbedUrl(changingHexagram.image_url) || ''} 
+                                                                    alt={changingHexagram.name}
+                                                                    className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
+                                                                />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </>
@@ -456,7 +459,6 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                             <Card className="bg-card/30 backdrop-blur border-mystic-purple/20 mystic-glow">
                                 <CardContent className="p-8">
                                     <h3 className="text-lg font-semibold text-mystic-gold mb-4 flex items-center gap-2">
-                                        <Sparkles className="w-5 h-5" />
                                         Lời Giải Quẻ
                                     </h3>
                                     <div className="text-foreground/85 whitespace-pre-wrap leading-relaxed">

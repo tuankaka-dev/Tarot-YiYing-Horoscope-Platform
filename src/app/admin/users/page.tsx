@@ -140,9 +140,9 @@ export default function AdminUsersPage() {
                                 <TableRow className="border-border/50 hover:bg-transparent">
                                     <TableHead>Người dùng</TableHead>
                                     <TableHead>Vai trò</TableHead>
-                                    <TableHead>Số lần gieo</TableHead>
-                                    <TableHead>Trạng thái</TableHead>
-                                    <TableHead>Ngày tham gia</TableHead>
+                                    <TableHead className="hidden md:table-cell">Số lần gieo</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Trạng thái</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Ngày tham gia</TableHead>
                                     <TableHead className="text-right">Hành động</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -170,10 +170,10 @@ export default function AdminUsersPage() {
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="hidden md:table-cell">
                                             <span className="text-mystic-gold">{user._count.histories}</span>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="hidden sm:table-cell">
                                             {user.is_banned ? (
                                                 <Badge variant="destructive" className="gap-1">
                                                     <Ban className="w-3 h-3" />
@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
                                                 </Badge>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-xs text-muted-foreground">
+                                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                                             {new Date(user.created_at).toLocaleDateString('vi-VN')}
                                         </TableCell>
                                         <TableCell className="text-right">
