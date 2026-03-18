@@ -36,6 +36,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<UserItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchUsers();
@@ -80,6 +81,14 @@ export default function AdminUsersPage() {
         }
     };
 
+    const filteredUsers = users.filter(user => {
+        const query = searchQuery.toLowerCase();
+        return (
+            (user.full_name && user.full_name.toLowerCase().includes(query)) ||
+            user.email.toLowerCase().includes(query)
+        );
+    });
+
     return (
         <div className="space-y-8">
             <div>
@@ -93,8 +102,32 @@ export default function AdminUsersPage() {
             </div>
 
             <Card className="bg-card/30 backdrop-blur border-mystic-purple/20">
-                <CardHeader>
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <CardTitle className="text-lg">Tất Cả Người Dùng ({users.length})</CardTitle>
+                    <div className="relative w-full sm:w-64">
+                        <svg
+                          className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm email, tên..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background/50 px-3 pl-9 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -114,7 +147,7 @@ export default function AdminUsersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {users.map((user) => (
+                                {filteredUsers.map((user) => (
                                     <TableRow key={user.id} className="border-border/30">
                                         <TableCell>
                                             <div>

@@ -11,6 +11,7 @@ interface AuthState {
     // Actions
     initialize: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<{ error?: string }>;
+    signInWithGoogle: () => Promise<{ error?: string }>;
     signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
     signOut: () => Promise<void>;
     fetchProfile: () => Promise<void>;
@@ -23,20 +24,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     initialize: async () => {
         const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        // Use getUser() instead of getSession() for reliable server-side auth
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (session?.user) {
-            set({ user: session.user });
+        if (user) {
+            set({ user });
             await get().fetchProfile();
         }
 
         set({ isLoading: false });
 
-        // Listen for auth changes
+        // Listen for auth changes including token refresh
         supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
+            if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
                 set({ user: session.user });
-                await get().fetchProfile();
+                // Only fetch profile on initial sign in, not on every token refresh
+                if (event === 'SIGNED_IN') {
+                    await get().fetchProfile();
+                }
             } else if (event === 'SIGNED_OUT') {
                 set({ user: null, profile: null });
             }
@@ -45,7 +50,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signIn: async (email, password) => {
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: error.message };
+        // Update store immediately after successful login
+        if (data.user) {
+            set({ user: data.user });
+            await get().fetchProfile();
+        }
+        return {};
+    },
+
+    signInWithGoogle: async () => {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            },
+        });
         if (error) return { error: error.message };
         return {};
     },
