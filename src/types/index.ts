@@ -3,6 +3,8 @@
 // ============================================================
 
 export type UserRole = 'user' | 'admin';
+export type TransactionStatus = 'pending' | 'success' | 'failed';
+export type TransactionType = 'premium_weekly' | 'credit_purchase' | 'daily_reset';
 
 export interface Profile {
   id: string;
@@ -11,8 +13,25 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   is_banned: boolean;
+  credits: number;
+  is_premium: boolean;
+  premium_until: Date | null;
+  last_reset_date: Date;
   created_at: Date;
   updated_at: Date;
+}
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  amount_vnd: number;
+  credits_change: number;
+  status: TransactionStatus;
+  type: TransactionType;
+  payos_order_id: string | null;
+  created_at: Date;
+  // Joined relation
+  profile?: Profile;
 }
 
 export interface Hexagram {

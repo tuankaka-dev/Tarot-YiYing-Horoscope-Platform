@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { checkAndResetCredits } from '@/lib/credits';
 
 // GET /api/profile?userId=xxx
 // Auto-creates profile if it doesn't exist yet
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
                 return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
             }
         }
+
+        // Lazy reset: check and reset daily credits
+        profile = await checkAndResetCredits(userId) || profile;
 
         return NextResponse.json(profile);
     } catch (error) {

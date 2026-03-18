@@ -66,9 +66,10 @@ export default function LandingPage() {
               <span className="text-foreground">.Online</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Khám phá trí tuệ cổ xưa của Kinh Dịch. Tung đồng xu,
-              đặt câu hỏi và nhận lời giải đáp sâu sắc từ trí tuệ
-              ngàn năm kết hợp công nghệ AI hiện đại.
+              Đừng để sự mông lung cản bước quyết định của bạn! GieoQue.Online số hóa Kinh Dịch
+              dưới sự cố vấn từ các bậc thầy Phong thủy và Tử vi hàng đầu. Chúng tôi giúp bạn giải
+              mã tín hiệu vũ trụ, biến bất định thành định hướng rõ ràng và sắc bén. Gieo quẻ mỗi
+              ngày để mỗi hành động đều tự tin, được bảo chứng bởi minh triết ngàn năm
             </p>
           </motion.div>
 
@@ -162,7 +163,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-24 px-4">
+      {/* <section className="relative py-24 px-4">
         <motion.div
           className="max-w-3xl mx-auto text-center p-12 rounded-2xl border border-mystic-gold/20 bg-card/80 backdrop-blur mystic-glow-strong shadow-lg"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -186,7 +187,7 @@ export default function LandingPage() {
             </Button>
           </Link>
         </motion.div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-8 px-4">

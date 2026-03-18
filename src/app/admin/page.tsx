@@ -7,14 +7,22 @@ import { Users, BookOpen, Settings, Activity } from 'lucide-react';
 
 export default function AdminOverviewPage() {
     const { profile } = useAuthStore();
-    const [stats, setStats] = useState({ users: 0, readings: 0, activeApi: '' });
+    const [stats, setStats] = useState({
+        users: 0,
+        readings: 0,
+        activeApi: '',
+        totalRevenue: 0,
+        totalSuccess: 0,
+        totalPending: 0
+    });
 
     useEffect(() => {
         async function fetchStats() {
             try {
-                const [usersRes, configRes] = await Promise.all([
+                const [usersRes, configRes, txRes] = await Promise.all([
                     fetch('/api/admin/users'),
                     fetch('/api/admin/api-config'),
+                    fetch('/api/admin/transactions'),
                 ]);
 
                 if (usersRes.ok) {
@@ -31,6 +39,16 @@ export default function AdminOverviewPage() {
                     const active = configs.find((c: { status: string; name: string }) => c.status === 'active');
                     setStats((prev) => ({ ...prev, activeApi: active?.name || 'Chưa có' }));
                 }
+
+                if (txRes.ok) {
+                    const txData = await txRes.json();
+                    setStats((prev) => ({
+                        ...prev,
+                        totalRevenue: txData.stats?.totalRevenue || 0,
+                        totalSuccess: txData.stats?.totalSuccess || 0,
+                        totalPending: txData.stats?.totalPending || 0,
+                    }));
+                }
             } catch (error) {
                 console.error('Lỗi khi tải thống kê:', error);
             }
@@ -38,6 +56,13 @@ export default function AdminOverviewPage() {
 
         fetchStats();
     }, []);
+
+    function formatCurrency(amount: number) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+        }).format(amount);
+    }
 
     const statCards = [
         {
@@ -55,11 +80,32 @@ export default function AdminOverviewPage() {
             bgColor: 'bg-mystic-gold/10',
         },
         {
+            title: 'Doanh Thu',
+            value: formatCurrency(stats.totalRevenue),
+            icon: Activity,
+            color: 'text-emerald-400',
+            bgColor: 'bg-emerald-400/10',
+        },
+        {
+            title: 'Đơn Thành Công',
+            value: stats.totalSuccess,
+            icon: Activity,
+            color: 'text-blue-400',
+            bgColor: 'bg-blue-400/10',
+        },
+        {
+            title: 'Đơn Đang Chờ',
+            value: stats.totalPending,
+            icon: Activity,
+            color: 'text-amber-400',
+            bgColor: 'bg-amber-400/10',
+        },
+        {
             title: 'AI Đang Hoạt Động',
             value: stats.activeApi || 'Chưa có',
             icon: Settings,
-            color: 'text-green-400',
-            bgColor: 'bg-green-400/10',
+            color: 'text-slate-400',
+            bgColor: 'bg-slate-400/10',
         },
     ];
 
@@ -75,7 +121,7 @@ export default function AdminOverviewPage() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {statCards.map((stat) => (
                     <Card key={stat.title} className="bg-card/30 backdrop-blur border-mystic-purple/20">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">

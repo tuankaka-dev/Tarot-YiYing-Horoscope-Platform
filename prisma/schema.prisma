@@ -8,18 +8,38 @@ datasource db {
 }
 
 model Profile {
-  id         String   @id @default(uuid()) @db.Uuid
-  email      String   @unique
-  role       String   @default("user") // "user" | "admin"
-  full_name  String?
-  avatar_url String?
-  is_banned  Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  role            String    @default("user") // "user" | "admin"
+  full_name       String?
+  avatar_url      String?
+  is_banned       Boolean   @default(false)
+  credits         Int       @default(10)
+  is_premium      Boolean   @default(false)
+  premium_until   DateTime?
+  last_reset_date DateTime  @default(now())
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
-  histories UserHistory[]
+  histories    UserHistory[]
+  transactions Transaction[]
 
   @@map("profiles")
+}
+
+model Transaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  user_id        String   @db.Uuid
+  amount_vnd     Int      @default(0)
+  credits_change Int      @default(0)
+  status         String   @default("pending") // "pending" | "success" | "failed"
+  type           String   // "premium_weekly" | "credit_purchase" | "daily_reset"
+  payos_order_id String?  @unique
+  created_at     DateTime @default(now())
+
+  profile Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
 }
 
 model Hexagram {
