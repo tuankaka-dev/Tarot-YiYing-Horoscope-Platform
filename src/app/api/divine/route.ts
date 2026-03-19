@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { decrypt } from '@/lib/encryption';
+import { divineRateLimiter } from '@/lib/rate-limit';
 
 // GET /api/divine — not used, POST only
 export async function GET() {
@@ -10,6 +12,13 @@ export async function GET() {
 // POST /api/divine — Get AI interpretation
 export async function POST(request: NextRequest) {
     try {
+        try {
+            // Apply rate limit: Max 5 requests per minute per IP/token
+            divineRateLimiter.checkNext(request, 5);
+        } catch {
+            return NextResponse.json({ error: 'Quá nhiều yêu cầu. Vui lòng đợi một chút và thử lại.' }, { status: 429 });
+        }
+
         // Verify authentication
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -70,6 +79,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No active AI configuration found. Please contact admin.' }, { status: 500 });
         }
 
+        // Decrypt the api_key before using it
+        apiConfig.api_key = decrypt(apiConfig.api_key);
+
         // Build prompt
         const prompt = buildPrompt(mainHexagram, changingHexagram, changingLines, question);
 
@@ -87,11 +99,13 @@ export async function POST(request: NextRequest) {
         } catch (aiError) {
             console.error('AI API call failed:', aiError);
             
-            // Refund 10 xu
-            await prisma.profile.update({
-                where: { id: user.id },
-                data: { credits: { increment: 10 } }
-            });
+            // Refund 10 xu ONLY if user is not PRO
+            if (!(currentProfile as any).is_pro) {
+                await prisma.profile.update({
+                    where: { id: user.id },
+                    data: { credits: { increment: 10 } }
+                });
+            }
 
             const message = aiError instanceof Error ? aiError.message : 'Lỗi không xác định';
             return NextResponse.json(

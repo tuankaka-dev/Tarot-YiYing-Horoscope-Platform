@@ -8,8 +8,12 @@ async function verifyAdmin() {
 
     if (!user) return null;
 
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } });
-    if (!profile || profile.role !== 'admin') return null;
+    let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
+    if (!isAdmin) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        isAdmin = profile?.role === 'admin';
+    }
+    if (!isAdmin) return null;
 
     return user;
 }

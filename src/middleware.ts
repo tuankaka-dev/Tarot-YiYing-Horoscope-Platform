@@ -2,6 +2,28 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+    const { method } = request;
+    const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+
+    // CSRF Protection: Verify Origin matches Host for state-changing requests
+    if (isMutation) {
+        const origin = request.headers.get('origin') || request.headers.get('referer');
+        const host = request.headers.get('host');
+
+        if (origin && host) {
+            try {
+                const originUrl = new URL(origin);
+                // Don't enforce CSRF on PayOS webhooks
+                const isWebhook = request.nextUrl.pathname.startsWith('/api/payment/webhook');
+                if (originUrl.host !== host && !isWebhook) {
+                    return NextResponse.json({ error: 'CSRF token mismatch or Invalid Origin' }, { status: 403 });
+                }
+            } catch {
+                return NextResponse.json({ error: 'Invalid Origin Header' }, { status: 403 });
+            }
+        }
+    }
+
     let supabaseResponse = NextResponse.next({
         request,
     });
@@ -58,21 +80,16 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(url);
         }
 
-        // Check admin role via API (we pass user id in a header for middleware check)
-        // For middleware, we'll do a simple DB query via supabase
-        try {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single();
+        // Check admin role via API claims rather than DB
+        let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
 
-            if (!profile || profile.role !== 'admin') {
-                const url = request.nextUrl.clone();
-                url.pathname = '/';
-                return NextResponse.redirect(url);
-            }
-        } catch {
+        if (!isAdmin) {
+            // Fallback for existing sessions before claims were implemented
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            isAdmin = profile?.role === 'admin';
+        }
+
+        if (!isAdmin) {
             const url = request.nextUrl.clone();
             url.pathname = '/';
             return NextResponse.redirect(url);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 // Helper to verify admin
 async function verifyAdmin() {
@@ -9,8 +10,12 @@ async function verifyAdmin() {
 
     if (!user) return null;
 
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } });
-    if (!profile || profile.role !== 'admin') return null;
+    let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
+    if (!isAdmin) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        isAdmin = profile?.role === 'admin';
+    }
+    if (!isAdmin) return null;
 
     return user;
 }
@@ -28,10 +33,13 @@ export async function GET() {
         });
 
         // Mask API keys for security
-        const maskedConfigs = configs.map((c) => ({
-            ...c,
-            api_key: c.api_key.substring(0, 8) + '••••••••',
-        }));
+        const maskedConfigs = configs.map((c) => {
+            const clearKey = decrypt(c.api_key);
+            return {
+                ...c,
+                api_key: clearKey.substring(0, 8) + '••••••••',
+            };
+        });
 
         return NextResponse.json(maskedConfigs);
     } catch (error) {
@@ -68,13 +76,14 @@ export async function POST(request: NextRequest) {
                 name,
                 provider,
                 base_url,
-                api_key,
+                api_key: encrypt(api_key),
                 headers: headers || null,
                 status: status || 'inactive',
             },
         });
 
-        return NextResponse.json({ ...config, api_key: config.api_key.substring(0, 8) + '••••••••' });
+        const clearKey = decrypt(config.api_key);
+        return NextResponse.json({ ...config, api_key: clearKey.substring(0, 8) + '••••••••' });
     } catch (error) {
         console.error('Admin API config create error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -110,13 +119,14 @@ export async function PUT(request: NextRequest) {
                 ...(name !== undefined && { name }),
                 ...(provider !== undefined && { provider }),
                 ...(base_url !== undefined && { base_url }),
-                ...(api_key !== undefined && { api_key }),
+                ...(api_key !== undefined && !api_key.includes('••••••••') && { api_key: encrypt(api_key) }),
                 ...(headers !== undefined && { headers }),
                 ...(status !== undefined && { status }),
             },
         });
 
-        return NextResponse.json({ ...config, api_key: config.api_key.substring(0, 8) + '••••••••' });
+        const clearKey = decrypt(config.api_key);
+        return NextResponse.json({ ...config, api_key: clearKey.substring(0, 8) + '••••••••' });
     } catch (error) {
         console.error('Admin API config update error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

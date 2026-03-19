@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // Helper to verify admin
 async function verifyAdmin() {
@@ -9,8 +10,12 @@ async function verifyAdmin() {
 
     if (!user) return null;
 
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } });
-    if (!profile || profile.role !== 'admin') return null;
+    let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
+    if (!isAdmin) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        isAdmin = profile?.role === 'admin';
+    }
+    if (!isAdmin) return null;
 
     return user;
 }
@@ -60,7 +65,19 @@ export async function PUT(request: NextRequest) {
         }
 
         const updateObj: Record<string, any> = {};
-        if (role !== undefined) updateObj.role = role;
+        if (role !== undefined) {
+            updateObj.role = role;
+            
+            // Also update Supabase auth metadata so the JWT claim reflects the new role immediately
+            const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+                user_metadata: { role }
+            });
+            
+            if (authError) {
+                console.error('Failed to update Supabase user metadata:', authError);
+                return NextResponse.json({ error: 'Failed to update authentication role' }, { status: 500 });
+            }
+        }
         if (is_banned !== undefined) updateObj.is_banned = is_banned;
         if (is_premium !== undefined) updateObj.is_premium = is_premium;
         if (is_pro !== undefined) updateObj.is_pro = is_pro;

@@ -16,6 +16,8 @@ export interface Profile {
   credits: number;
   is_premium: boolean;
   premium_until: Date | null;
+  is_pro: boolean;
+  pro_until: Date | null;
   last_reset_date: Date;
   created_at: Date;
   updated_at: Date;

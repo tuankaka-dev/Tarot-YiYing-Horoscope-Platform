@@ -153,7 +153,9 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         if (!mainHexagram || !divResult) return;
 
         // Optimistic UI update for credits (deduct 10 xu immediately)
-        if (profile && profile.credits >= 10) {
+        if (profile && profile.is_pro) {
+            // PRO users have unlimited usage - skip deduction
+        } else if (profile && profile.credits >= 10) {
             useAuthStore.setState({ profile: { ...profile, credits: profile.credits - 10 } });
         } else if (profile && profile.credits < 10) {
             toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp Premium.');
@@ -271,7 +273,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         disabled={!question.trim()}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        Bắt Đầu Gieo Quẻ (10 xu)
+                                        Bắt Đầu Gieo Quẻ {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -480,7 +482,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                 className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 px-8 text-lg gold-glow"
                                             >
                                                 <Send className="w-5 h-5" />
-                                                Giải quẻ chuyên sâu (10 xu)
+                                                Giải quẻ chuyên sâu {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
                                             </Button>
                                         )}
                                         <Button variant="outline" onClick={handleReset} className="gap-2 h-12 px-8 text-lg">
