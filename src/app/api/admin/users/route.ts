@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { userId, role, is_banned } = body;
+        const { userId, role, is_banned, is_premium, is_pro, premium_until } = body;
 
         if (!userId) {
             return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
@@ -59,12 +59,16 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
         }
 
+        const updateObj: Record<string, any> = {};
+        if (role !== undefined) updateObj.role = role;
+        if (is_banned !== undefined) updateObj.is_banned = is_banned;
+        if (is_premium !== undefined) updateObj.is_premium = is_premium;
+        if (is_pro !== undefined) updateObj.is_pro = is_pro;
+        if (premium_until !== undefined) updateObj.premium_until = premium_until ? new Date(premium_until) : null;
+
         const updated = await prisma.profile.update({
             where: { id: userId },
-            data: {
-                ...(role !== undefined && { role }),
-                ...(is_banned !== undefined && { is_banned }),
-            },
+            data: updateObj,
         });
 
         return NextResponse.json(updated);

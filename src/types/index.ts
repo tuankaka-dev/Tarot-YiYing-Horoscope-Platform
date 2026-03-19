@@ -4,7 +4,7 @@
 
 export type UserRole = 'user' | 'admin';
 export type TransactionStatus = 'pending' | 'success' | 'failed';
-export type TransactionType = 'premium_weekly' | 'credit_purchase' | 'daily_reset';
+export type TransactionType = 'premium_weekly' | 'pro_monthly' | 'credit_purchase' | 'daily_reset';
 
 export interface Profile {
   id: string;

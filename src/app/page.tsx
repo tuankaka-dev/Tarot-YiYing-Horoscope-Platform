@@ -1,15 +1,46 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Shield, Zap } from 'lucide-react';
+import { BookOpen, Shield, Zap, Crown, Loader2, CreditCard, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 
 const trigrams = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
 export default function LandingPage() {
   const { user } = useAuthStore();
+  const [upgradingTier, setUpgradingTier] = useState<string | null>(null);
+
+  const handleUpgrade = async (tier: 'premium_weekly' | 'pro_monthly' = 'premium_weekly') => {
+    if (!user) {
+      window.location.href = '/register';
+      return;
+    }
+    setUpgradingTier(tier);
+    try {
+      const res = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        }
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || 'Lỗi khi tạo giao dịch PayOS. Hãy kiểm tra lại API Key trong .env');
+      }
+    } catch (e) {
+      toast.error('Lỗi kết nối. Vui lòng thử lại sau.');
+    } finally {
+      setUpgradingTier(null);
+    }
+  };
 
   return (
     <div className="relative overflow-hidden">
@@ -63,10 +94,10 @@ export default function LandingPage() {
           >
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight">
               <span className="text-mystic-gold text-gold-glow">GieoQuẻ</span>
-              <span className="text-foreground">.Online</span>
+              <span className="text-foreground">.app</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Đừng để sự mông lung cản bước quyết định của bạn! GieoQue.Online số hóa Kinh Dịch
+              Đừng để sự mông lung cản bước quyết định của bạn! GieoQue.App số hóa Kinh Dịch
               dưới sự cố vấn từ các bậc thầy Phong thủy và Tử vi hàng đầu. Chúng tôi giúp bạn giải
               mã tín hiệu vũ trụ, biến bất định thành định hướng rõ ràng và sắc bén. Gieo quẻ mỗi
               ngày để mỗi hành động đều tự tin, được bảo chứng bởi minh triết ngàn năm
@@ -102,6 +133,169 @@ export default function LandingPage() {
         </div>
       </section>
 
+
+
+      {/* Pricing / Premium Section */}
+      <section className="relative py-24 px-4 bg-mystic-purple/5 border-t border-mystic-purple/10">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <span className="text-mystic-gold text-gold-glow">Gói Đăng Ký</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Nâng tầm trải nghiệm tâm linh của bạn với quyền lợi không giới hạn.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid md:grid-cols-3 gap-6 items-stretch max-w-7xl mx-auto"
+          >
+            {/* Free Tier Card */}
+            <div className="bg-card/40 backdrop-blur border border-border/50 p-8 rounded-2xl text-center space-y-6 shadow-lg flex flex-col">
+              <div className="inline-flex items-center justify-center p-3 bg-muted rounded-full mb-2">
+                <Zap className="w-8 h-8 text-muted-foreground" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-foreground">Gói Miễn Phí</h3>
+
+              <div className="text-4xl font-bold text-foreground">
+                0₫ <span className="text-lg font-normal text-muted-foreground mr-1">/</span> <span className="text-lg font-medium text-foreground/80">vĩnh viễn</span>
+              </div>
+
+              <ul className="text-left space-y-3 mt-6 mb-8 text-foreground/70 flex-1">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                  Nhận <strong className="text-foreground px-1">10 xu</strong> mỗi ngày
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                  Gieo quẻ Kinh Dịch cơ bản
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                  Xem ý nghĩa quẻ chính & quẻ biến
+                </li>
+                <li className="flex items-start gap-4 ml-0.5 mt-1 border-t border-border/50 pt-3">
+                  <div className="flex items-center gap-2 opacity-60">
+                    <X className="w-4 h-4 text-destructive shrink-0" />
+                    <span className="text-sm">Không có Luận giải chuyên sâu</span>
+                  </div>
+                </li>
+                <li className="flex items-center gap-2 opacity-60">
+                  <X className="w-4 h-4 text-destructive shrink-0" />
+                  <span className="text-sm">Ưu tiên xử lý thấp hơn</span>
+                </li>
+              </ul>
+
+              <Link href="/divine" className="w-full">
+                <Button variant="outline" className="w-full h-14 text-lg border-border hover:bg-muted font-semibold transition-all">
+                  Gieo Quẻ Ngay
+                </Button>
+              </Link>
+            </div>
+
+            {/* Premium Tier Card */}
+            <div className="bg-card/80 backdrop-blur border border-mystic-gold/40 p-6 rounded-2xl text-center space-y-6 shadow-xl relative overflow-hidden group flex flex-col border-2">
+              <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-tight z-20 shadow-sm">
+                Phổ Biến
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-mystic-purple/5 via-transparent to-mystic-gold/5 opacity-30 pointer-events-none" />
+
+              <div className="inline-flex items-center justify-center p-3 bg-mystic-gold/10 rounded-full mb-2">
+                <Crown className="w-8 h-8 text-mystic-gold" />
+              </div>
+
+              <h3 className="text-xl font-bold text-foreground first-letter:uppercase">Gói Tuần</h3>
+
+              <div className="text-3xl font-bold text-mystic-gold drop-shadow-sm">
+                50.000₫ <span className="text-sm font-normal text-muted-foreground mr-1">/</span> <span className="text-sm font-medium text-foreground/80 lowercase">tuần</span>
+              </div>
+
+              <ul className="text-left space-y-2 mt-4 mb-6 text-foreground/80 flex-1 text-sm">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
+                  Nhận ngay <strong className="text-mystic-gold">100 xu</strong> mỗi ngày
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
+                  Gieo quẻ tự do không lo giới hạn
+                </li>
+                <li className="flex items-start gap-2 font-semibold text-mystic-gold py-1 bg-mystic-gold/5 rounded-lg px-2 -mx-2">
+                  <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
+                  Luận giải chuyên sâu bằng AI
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
+                  Không quảng cáo & ưu tiên
+                </li>
+              </ul>
+
+              <Button
+                onClick={() => handleUpgrade('premium_weekly')}
+                disabled={!!upgradingTier}
+                className="w-full h-12 text-base gap-2 bg-gradient-to-r from-mystic-gold to-amber-500 hover:from-amber-400 hover:to-mystic-gold text-black font-semibold shadow-md gold-glow relative z-10"
+              >
+                {upgradingTier === 'premium_weekly' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                Mua Ngay
+              </Button>
+            </div>
+
+            {/* PRO Tier Card */}
+            <div className="bg-card/90 backdrop-blur border border-amber-500 p-6 rounded-2xl text-center space-y-6 shadow-2xl relative overflow-hidden group flex flex-col scale-105 border-2 z-10">
+              <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-tight z-20 shadow-sm">
+                Pro
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-transparent to-orange-600/20 opacity-40 pointer-events-none animate-pulse" />
+
+              <div className="inline-flex items-center justify-center p-3 bg-amber-500/20 rounded-full mb-2 ring-2 ring-amber-500/30">
+                <Zap className="w-8 h-8 text-amber-500" />
+              </div>
+
+              <h3 className="text-2xl font-black text-foreground uppercase tracking-widest">Gói Tháng</h3>
+
+              <div className="text-4xl font-black text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                100.000₫ <span className="text-lg font-normal text-muted-foreground mr-1">/</span> <span className="text-lg font-bold text-foreground/80">tháng</span>
+              </div>
+
+              <ul className="text-left space-y-3 mt-4 mb-6 text-foreground flex-1">
+                <li className="flex items-start gap-2 font-bold text-amber-500 py-1 bg-amber-500/10 rounded-lg px-2 -mx-2">
+                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  Sử dụng dịch vụ không cần xu (vô hạn)
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  Luận giải quẻ AI không giới hạn
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  Mở khóa toàn bộ tính năng cao cấp
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  Đặc quyền hỗ trợ VIP & Ưu tiên
+                </li>
+              </ul>
+
+              <Button
+                onClick={() => handleUpgrade('pro_monthly')}
+                disabled={!!upgradingTier}
+                className="w-full h-14 text-lg gap-2 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 hover:from-amber-300 hover:via-orange-400 hover:to-amber-500 text-black font-extrabold shadow-lg gold-glow relative z-10 uppercase scale-105"
+              >
+                {upgradingTier === 'pro_monthly' ? <Loader2 className="w-6 h-6 animate-spin" /> : <Crown className="w-6 h-6" />}
+                Đăng Ký
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
       {/* Features Section */}
       <section className="relative py-24 px-4">
         <div className="max-w-6xl mx-auto">
@@ -131,9 +325,9 @@ export default function LandingPage() {
               },
               {
                 icon: BookOpen,
-                title: 'Giải Quẻ Bằng AI',
+                title: 'Luận giải chuyên sâu',
                 description:
-                  'Nhận lời giải quẻ sâu sắc kết hợp trí tuệ Kinh Dịch ngàn năm với sự hiểu biết của trí tuệ nhân tạo hiện đại.',
+                  'Nhận lời giải quẻ sâu sắc kết hợp trí tuệ Kinh Dịch cổ xưa và được cố vấn từ các bậc thầy Phong thủy và Tử vi nổi tiếng ở Việt Nam. Đưa lời khuyên hữu ích và hệ thống gợi ý ngày giờ tốt theo từng cá nhân',
               },
               {
                 icon: Shield,
@@ -161,40 +355,12 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      {/* <section className="relative py-24 px-4">
-        <motion.div
-          className="max-w-3xl mx-auto text-center p-12 rounded-2xl border border-mystic-gold/20 bg-card/80 backdrop-blur mystic-glow-strong shadow-lg"
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-        >
-          <Zap className="w-10 h-10 text-mystic-gold mx-auto mb-4" />
-          <h2 className="text-3xl font-bold mb-4 text-mystic-gold text-gold-glow">
-            Sẵn Sàng Hỏi Quẻ?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-            Hãy tĩnh tâm, tập trung vào câu hỏi của bạn, và để trí tuệ cổ xưa
-            của Kinh Dịch soi sáng con đường phía trước.
-          </p>
-          <Link href="/divine">
-            <Button
-              size="lg"
-              className="gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 hover:from-mystic-gold/90 hover:to-amber-600/90 text-white font-semibold h-14 px-10 text-lg gold-glow"
-            >
-              Gieo Quẻ Ngay
-            </Button>
-          </Link>
-        </motion.div>
-      </section> */}
-
       {/* Footer */}
       <footer className="border-t border-border/50 py-8 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">☯</span>
-            <span className="text-sm text-muted-foreground">GieoQuẻ.Online</span>
+            <span className="text-sm text-muted-foreground">GieoQuẻ.App</span>
           </div>
           <p className="text-xs text-muted-foreground">
             Kinh Dịch là kim chỉ nam, không phải lời tiên tri. Hãy dùng trí tuệ của nó để suy ngẫm về con đường của bạn.

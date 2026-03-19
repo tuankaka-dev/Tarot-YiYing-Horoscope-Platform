@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User, History, Shield, Menu, X } from 'lucide-react';
+import { LogOut, User, History, Shield, Menu, X, Coins, Crown, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function Navbar() {
@@ -34,7 +34,7 @@ export function Navbar() {
                         <span className="text-2xl group-hover:animate-spin-slow transition-transform">☯</span>
                         <span className="font-bold text-lg text-mystic-gold text-gold-glow tracking-wide">
                             GieoQuẻ
-                            <span className="text-foreground">.Online</span>
+                            <span className="text-foreground">.App</span>
 
                         </span>
                     </Link>
@@ -73,40 +73,60 @@ export function Navbar() {
                                     </Link>
                                 </div>
 
+                                {/* Balance & Premium Status */}
+                                <div className="hidden sm:flex items-center gap-2 mr-1">
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-mystic-gold/10 border border-mystic-gold/20">
+                                        <Coins className="w-4 h-4 text-mystic-gold" />
+                                        <span className="text-sm font-bold text-mystic-gold">{profile?.credits || 0}</span>
+                                    </div>
+                                </div>
+
                                 {/* Avatar Menu */}
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger className="relative h-9 w-9 rounded-full cursor-pointer focus:outline-none">
-                                        <Avatar className="h-9 w-9 border border-mystic-gold/30">
-                                            <AvatarFallback className="bg-mystic-gold/10 text-mystic-gold text-sm font-semibold">
+                                    <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer focus:outline-none ring-2 ring-transparent transition-all hover:ring-mystic-gold/50 rounded-full md:pl-1 md:pr-4 py-1">
+                                        <Avatar className="h-9 w-9 border-2 border-mystic-gold/30">
+                                            <AvatarFallback className="bg-mystic-gold/10 text-mystic-gold font-semibold">
                                                 {(profile?.full_name || user.email || '?')[0].toUpperCase()}
-
                                             </AvatarFallback>
                                         </Avatar>
-
+                                        <span className="hidden md:block text-sm font-medium text-foreground/80 max-w-[120px] truncate">
+                                            {profile?.full_name || 'Người dùng'}
+                                        </span>
                                     </DropdownMenuTrigger>
 
                                     <DropdownMenuContent
                                         align="end"
-                                        className="w-56 bg-white border-border shadow-lg"
+                                        className="w-64 bg-white border-border shadow-lg"
                                     >
-                                        <div className="px-2 py-1.5">
-                                            <p className="text-sm font-medium">{profile?.full_name || 'Người dùng'}</p>
-                                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                                        <div className="px-3 py-2 flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-semibold truncate max-w-[130px]">{profile?.full_name || 'Người dùng'}</p>
+                                                {(profile as any)?.is_pro ? (
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-amber-500 bg-amber-500/10 animate-pulse shadow-[0_0_5px_rgba(245,158,11,0.3)]">
+                                                        <Zap className="w-3 h-3 text-amber-500" />
+                                                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">PRO</span>
+                                                    </div>
+                                                ) : profile?.is_premium ? (
+                                                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-amber-500/50 bg-amber-500/10">
+                                                        <Crown className="w-3 h-3 text-amber-500" />
+                                                        <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider">Premium</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="px-1.5 py-0.5 rounded border border-muted-foreground/30 bg-muted-foreground/5">
+                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Free</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem
-                                            className="gap-2 cursor-pointer"
-                                            onClick={() => router.push('/dashboard/profile')}
-                                        >
-                                            <User className="w-4 h-4" />
-                                            Hồ Sơ
-                                        </DropdownMenuItem>
+
                                         <DropdownMenuItem
                                             className="gap-2 cursor-pointer"
                                             onClick={() => router.push('/dashboard')}
                                         >
                                             <History className="w-4 h-4" />
-                                            Lịch Sử Gieo Quẻ
+                                            Cá nhân
                                         </DropdownMenuItem>
                                         {profile?.role === 'admin' && (
                                             <>
@@ -121,6 +141,13 @@ export function Navbar() {
                                             </>
                                         )}
                                         <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            className="gap-2 cursor-pointer"
+                                            onClick={() => router.push('/dashboard/profile')}
+                                        >
+                                            <User className="w-4 h-4" />
+                                            Cài đặt
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive">
                                             <LogOut className="w-4 h-4" />
                                             Đăng Xuất

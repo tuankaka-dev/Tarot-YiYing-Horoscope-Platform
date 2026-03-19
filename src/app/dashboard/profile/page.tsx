@@ -9,14 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, Save, Loader2, CreditCard, Crown, Coins } from 'lucide-react';
+import { User, Save, Loader2, Coins, Sun, Bell, Calendar, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
     const { user, profile, fetchProfile } = useAuthStore();
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [isLoading, setIsLoading] = useState(false);
-    const [isUpgrading, setIsUpgrading] = useState(false);
 
     useEffect(() => {
         // Handle payment redirects from PayOS
@@ -58,26 +57,7 @@ export default function ProfilePage() {
         }
     };
 
-    const handleUpgradePremium = async () => {
-        setIsUpgrading(true);
-        try {
-            const res = await fetch('/api/payment/create', { method: 'POST' });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.checkoutUrl) {
-                    window.location.href = data.checkoutUrl; // Redirect to PayOS
-                } else {
-                    toast.error('Không thể tạo link thanh toán.');
-                }
-            } else {
-                toast.error('Lỗi khi khởi tạo giao dịch.');
-            }
-        } catch {
-            toast.error('Đã xảy ra lỗi hệ thống.');
-        } finally {
-            setIsUpgrading(false);
-        }
-    };
+
 
     return (
         <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
@@ -136,90 +116,13 @@ export default function ProfilePage() {
                         <Button
                             onClick={handleSave}
                             disabled={isLoading}
-                            className="gap-2 bg-gradient-to-r from-mystic-purple to-mystic-indigo text-white"
+                            className="w-full sm:w-auto gap-2 bg-gradient-to-r from-mystic-purple to-mystic-indigo text-white shadow-md"
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             Lưu Thay Đổi
                         </Button>
                     </CardContent>
                 </Card>
-
-                {/* Plan & Credits Card */}
-                <Card className="bg-card/30 backdrop-blur border-mystic-gold/20">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <CreditCard className="w-5 h-5 text-mystic-gold" />
-                            Tài Khoản & Gói Cước
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-background/40 p-4 rounded-xl border border-border/50">
-                                <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1.5">
-                                    <Coins className="w-4 h-4 text-mystic-gold" /> Số dư Xu
-                                </p>
-                                <p className="text-3xl font-bold text-mystic-gold">{profile?.credits || 0}<span className="text-lg font-medium text-muted-foreground ml-1">xu</span></p>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    {profile?.is_premium 
-                                        ? "Được +100 xu mỗi ngày" 
-                                        : "Tặng 10 xu khi đăng ký. Nâng cấp để nhận xu mỗi ngày."}
-                                </p>
-                            </div>
-                            
-                            <div className="bg-background/40 p-4 rounded-xl border border-border/50 relative overflow-hidden">
-                                {profile?.is_premium && (
-                                    <div className="absolute top-0 right-0 p-2 bg-mystic-gold/10 rounded-bl-xl">
-                                        <Crown className="w-4 h-4 text-mystic-gold" />
-                                    </div>
-                                )}
-                                <p className="text-sm text-muted-foreground mb-1">Trạng thái gói</p>
-                                <p className="text-xl font-bold">
-                                    {profile?.is_premium ? (
-                                        <span className="text-mystic-gold">Premium</span>
-                                    ) : (
-                                        <span className="text-foreground/70">Cơ bản</span>
-                                    )}
-                                </p>
-                                {profile?.is_premium && profile?.premium_until && (
-                                    <p className="text-xs text-muted-foreground mt-3">
-                                        Hết hạn: {new Date(profile.premium_until).toLocaleDateString('vi-VN')}
-                                    </p>
-                                )}
-                                {!profile?.is_premium && (
-                                    <p className="text-xs text-muted-foreground mt-3">
-                                        Giới hạn 10 xu sử dụng trọn đời
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {!profile?.is_premium && (
-                            <div className="bg-mystic-purple/5 border border-mystic-purple/20 p-5 rounded-xl text-center space-y-3 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-r from-mystic-purple/10 to-mystic-gold/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                
-                                <h3 className="text-lg font-semibold text-mystic-gold flex items-center justify-center gap-2">
-                                    <Crown className="w-5 h-5" /> Nâng cấp Premium
-                                </h3>
-                                <p className="text-sm text-foreground/80 max-w-sm mx-auto">
-                                    Mở khóa đặc quyền: Nhận <strong>100 xu mỗi ngày</strong> để sử dụng tất cả tính năng gieo quẻ AI không giới hạn.
-                                </p>
-                                <div className="text-2xl font-bold text-white pt-2">
-                                    50.000₫ <span className="text-sm font-normal text-muted-foreground">/ tuần</span>
-                                </div>
-                                
-                                <Button 
-                                    onClick={handleUpgradePremium}
-                                    disabled={isUpgrading}
-                                    className="w-full sm:w-auto mt-4 gap-2 bg-gradient-to-r from-mystic-gold to-amber-500 hover:from-amber-400 hover:to-mystic-gold text-black font-semibold"
-                                >
-                                    {isUpgrading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-                                    Nâng cấp ngay qua PayOS
-                                </Button>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
             </div>
         </div>
     );

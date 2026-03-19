@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "GieoQuẻ.Online — Gieo Quẻ Kinh Dịch Trực Tuyến",
+  title: "GieoQuẻ.app — Gieo Quẻ Kinh Dịch Trực Tuyến",
   description:
     "Gieo quẻ Kinh Dịch theo phương pháp tung 3 đồng xu truyền thống. Nhận giải quẻ bằng AI kết hợp trí tuệ ngàn năm với công nghệ hiện đại.",
   keywords: ["Kinh Dịch", "gieo quẻ", "I Ching", "bói dịch", "quẻ dịch", "tung xu"],

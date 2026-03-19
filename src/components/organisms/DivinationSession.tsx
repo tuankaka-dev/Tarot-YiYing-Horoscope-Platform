@@ -12,11 +12,12 @@ import { useAuthStore } from '@/stores/auth-store';
 import { tossThreeCoins, buildDivination } from '@/lib/divination';
 import type { Hexagram, LineType, CoinTossResult } from '@/types';
 import { Loader2, RotateCcw, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 function getDriveEmbedUrl(url: string | null | undefined): string | null {
     if (!url) return null;
     let fileId: string | null = null;
-    
+
     // Extract file ID from various Google Drive link formats
     const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (fileIdMatch && fileIdMatch[1]) {
@@ -45,7 +46,7 @@ interface DivinationSessionProps {
 type Phase = 'question' | 'shaking' | 'tossing' | 'result' | 'interpreting' | 'complete';
 
 export function DivinationSession({ hexagrams }: DivinationSessionProps) {
-    const { user } = useAuthStore();
+    const { user, profile, fetchProfile } = useAuthStore();
 
     const [question, setQuestion] = useState('');
     const [tosses, setTosses] = useState<CoinTossResult[]>([]);
@@ -53,6 +54,8 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const [phase, setPhase] = useState<Phase>('question');
     const [currentToss, setCurrentToss] = useState(0);
     const [isShaking, setIsShaking] = useState(false);
+    const [isInterpreting, setIsInterpreting] = useState(false);
+    const [historyId, setHistoryId] = useState<string | null>(null);
 
     // Build hexagram data from tosses
     const lines: LineType[] = tosses.map((t) => t.lineType);
@@ -67,7 +70,33 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const changingLines = divResult?.changingLinePositions || [];
 
     // Start shaking animation then auto-toss
-    const startShaking = () => {
+    const startShaking = async () => {
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để gieo quẻ.');
+            window.location.href = '/register';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/credits/deduct', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: 10, reason: 'gieo_que' }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                toast.error(data.error || 'Trừ xu thất bại. Bạn có đủ xu không?');
+                return;
+            }
+
+            // Sync credits immediately
+            fetchProfile();
+        } catch {
+            toast.error('Lỗi kết nối. Vui lòng thử lại.');
+            return;
+        }
+
         setPhase('shaking');
         setIsShaking(true);
 
@@ -83,8 +112,29 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         const results: CoinTossResult[] = [];
         let toss = 0;
 
-        const doToss = () => {
+        const doToss = async () => {
             if (toss >= 6) {
+                // Save history immediately after casting the hexagram
+                const finalDivResult = buildDivination(results);
+                try {
+                    const res = await fetch('/api/history/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question,
+                            mainHexagramId: finalDivResult.mainHexagramNumber,
+                            changingHexagramId: finalDivResult.changingHexagramNumber || null,
+                            changingLines: finalDivResult.changingLinePositions
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.id) setHistoryId(data.id);
+                    }
+                } catch {
+                    // Ignore fail, at worst history won't be saved here
+                }
+
                 setPhase('result');
                 return;
             }
@@ -96,13 +146,21 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             setTimeout(doToss, 600);
         };
         doToss();
-    }, []);
+    }, [question]);
 
     // Request AI interpretation
     const requestInterpretation = async () => {
         if (!mainHexagram || !divResult) return;
 
-        setPhase('interpreting');
+        // Optimistic UI update for credits (deduct 10 xu immediately)
+        if (profile && profile.credits >= 10) {
+            useAuthStore.setState({ profile: { ...profile, credits: profile.credits - 10 } });
+        } else if (profile && profile.credits < 10) {
+            toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp Premium.');
+            return;
+        }
+
+        setIsInterpreting(true);
 
         try {
             const res = await fetch('/api/divine', {
@@ -115,10 +173,14 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                     changingHexagramId: changingHexagram?.id || null,
                     changingLines: divResult.changingLinePositions,
                     lineValues: tosses.map((t) => t.value),
+                    historyId,
                 }),
             });
 
             if (res.ok) {
+                // Sync credits immediately
+                fetchProfile();
+
                 // API returns plain text for successful responses
                 const contentType = res.headers.get('content-type') || '';
                 let text: string;
@@ -129,15 +191,20 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                     text = await res.text();
                 }
                 setAiResponse(text);
-                setPhase('complete');
             } else {
+                // Revert optimistic update on failure by refetching actual credits
+                fetchProfile();
+
+                if (res.status === 402) {
+                    toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp Premium.');
+                }
                 const errData = await res.json().catch(() => null);
                 setAiResponse(errData?.error || 'Xin lỗi, không thể kết nối với AI giải quẻ. Vui lòng thử lại sau.');
-                setPhase('complete');
             }
         } catch {
             setAiResponse('Đã xảy ra lỗi khi kết nối. Vui lòng kiểm tra kết nối mạng và thử lại.');
-            setPhase('complete');
+        } finally {
+            setIsInterpreting(false);
         }
     };
 
@@ -147,6 +214,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         setAiResponse('');
         setPhase('question');
         setCurrentToss(0);
+        setHistoryId(null);
     };
 
     // Build changed hexagram lines for display
@@ -193,7 +261,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                     <Textarea
                                         value={question}
                                         onChange={(e) => setQuestion(e.target.value)}
-                                        placeholder={"VD: Con đường sự nghiệp hiện tại có phù hợp không?"}
+                                        placeholder={"VD:  Hôm nay có nên khai trương văn phòng không?"}
                                         rows={4}
                                         className="bg-background/50 border-mystic-purple/20 focus:border-mystic-gold/50 resize-none"
                                     />
@@ -203,7 +271,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         disabled={!question.trim()}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        Bắt Đầu Gieo Quẻ
+                                        Bắt Đầu Gieo Quẻ (10 xu)
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -328,15 +396,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                         {mainHexagram.name}
                                                     </p>
                                                     <p className="text-sm font-medium text-foreground/70">
-                                                        {mainHexagram.trigram_above} và {mainHexagram.trigram_below}
+                                                        {mainHexagram.trigram_above} / {mainHexagram.trigram_below}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground mt-1">{mainHexagram.meaning}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">{mainHexagram.description}</p>
                                                     {mainHexagram.image_url && (
                                                         <div className="mt-4 flex justify-center">
                                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img 
-                                                                src={getDriveEmbedUrl(mainHexagram.image_url) || ''} 
+                                                            <img
+                                                                src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
                                                                 alt={mainHexagram.name}
                                                                 className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
                                                             />
@@ -360,15 +428,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                             {changingHexagram.name}
                                                         </p>
                                                         <p className="text-sm font-medium text-foreground/70">
-                                                            {changingHexagram.trigram_above} và {changingHexagram.trigram_below}
+                                                            {changingHexagram.trigram_above} / {changingHexagram.trigram_below}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground mt-1">{changingHexagram.meaning}</p>
                                                         <p className="text-xs text-muted-foreground mt-1">{changingHexagram.description}</p>
                                                         {changingHexagram.image_url && (
                                                             <div className="mt-4 flex justify-center">
                                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img 
-                                                                    src={getDriveEmbedUrl(changingHexagram.image_url) || ''} 
+                                                                <img
+                                                                    src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
                                                                     alt={changingHexagram.name}
                                                                     className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
                                                                 />
@@ -386,97 +454,42 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         </p>
                                     )}
 
-                                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                        <Button
-                                            onClick={requestInterpretation}
-                                            className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 px-8 text-lg gold-glow"
-                                        >
-                                            <Send className="w-5 h-5" />
-                                            Giải quẻ chi tiết
-                                        </Button>
-                                        <Button variant="outline" onClick={handleReset} className="gap-2">
-                                            <RotateCcw className="w-4 h-4" />
-                                            Gieo Lại
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
+                                    {/* AI Response Section Inline */}
+                                    {isInterpreting && (
+                                        <div className="mt-8 p-8 text-center space-y-4 rounded-xl bg-mystic-purple/5 border border-mystic-purple/20">
+                                            <Loader2 className="w-8 h-8 animate-spin text-mystic-gold mx-auto" />
+                                            <p className="text-sm text-mystic-gold animate-pulse">Đang kết nối tâm linh, thỉnh giảng lời khuyên...</p>
+                                        </div>
+                                    )}
 
-                    {/* PHASE 5: Interpreting */}
-                    {phase === 'interpreting' && (
-                        <motion.div
-                            key="interpreting"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                        >
-                            <Card className="bg-card/30 backdrop-blur border-mystic-purple/20">
-                                <CardContent className="p-12 text-center space-y-4">
-                                    <Loader2 className="w-12 h-12 animate-spin text-mystic-gold mx-auto" />
-                                    <h2 className="text-xl font-semibold text-mystic-gold">Đang Luận Giải Quẻ...</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        AI đang phân tích quẻ dịch và soạn lời giải cho bạn
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
-
-                    {/* PHASE 6: Complete */}
-                    {phase === 'complete' && (
-                        <motion.div
-                            key="complete"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-6"
-                        >
-                            <Card className="bg-card/30 backdrop-blur border-mystic-gold/30">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center gap-6">
-                                        {mainHexagram && (
-                                            <div className="text-center">
-                                                <p className="text-3xl font-bold text-mystic-gold">{mainHexagram.name}</p>
-                                                <p className="text-sm text-muted-foreground">{mainHexagram.trigram_above} trên {mainHexagram.trigram_below}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">{mainHexagram.meaning}</p>
+                                    {aiResponse && !isInterpreting && (
+                                        <div className="mt-8 p-6 rounded-xl bg-card/50 backdrop-blur border border-mystic-gold/30 mystic-glow text-left">
+                                            <h3 className="text-lg font-semibold text-mystic-gold mb-4 flex items-center justify-center gap-2">
+                                                Lời Giải Quẻ
+                                            </h3>
+                                            <div className="text-foreground/90 whitespace-pre-wrap leading-relaxed text-sm md:text-base">
+                                                {aiResponse}
                                             </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+                                        {!aiResponse && !isInterpreting && (
+                                            <Button
+                                                onClick={requestInterpretation}
+                                                className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 px-8 text-lg gold-glow"
+                                            >
+                                                <Send className="w-5 h-5" />
+                                                Giải quẻ chuyên sâu (10 xu)
+                                            </Button>
                                         )}
-                                        {changingHexagram && (
-                                            <>
-                                                <span className="text-xl text-muted-foreground">→</span>
-                                                <div className="text-center">
-                                                    <p className="text-3xl font-bold text-mystic-gold">{changingHexagram.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{changingHexagram.trigram_above} trên {changingHexagram.trigram_below}</p>
-                                                    <p className="text-xs text-muted-foreground mt-1">{changingHexagram.meaning}</p>
-                                                </div>
-                                            </>
-                                        )}
+                                        <Button variant="outline" onClick={handleReset} className="gap-2 h-12 px-8 text-lg">
+                                            <RotateCcw className="w-4 h-4" />
+                                            {aiResponse ? 'Gieo Quẻ Mới' : 'Gieo Lại'}
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            <Card className="bg-card/30 backdrop-blur border-mystic-purple/20 mystic-glow">
-                                <CardContent className="p-8">
-                                    <h3 className="text-lg font-semibold text-mystic-gold mb-4 flex items-center gap-2">
-                                        Lời Giải Quẻ
-                                    </h3>
-                                    <div className="text-foreground/85 whitespace-pre-wrap leading-relaxed">
-                                        {aiResponse}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            <div className="flex justify-center">
-                                <Button
-                                    onClick={handleReset}
-                                    variant="outline"
-                                    className="gap-2 border-mystic-purple/30 hover:bg-mystic-purple/10"
-                                >
-                                    <RotateCcw className="w-4 h-4" />
-                                    Gieo Quẻ Mới
-                                </Button>
-                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>

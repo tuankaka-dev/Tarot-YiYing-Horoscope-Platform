@@ -24,13 +24,33 @@ export async function checkAndResetCredits(userId: string) {
     const updateData: {
         credits?: number;
         is_premium?: boolean;
+        is_pro?: boolean;
         last_reset_date?: Date;
     } = {};
+
+    // Check if PRO has expired
+    if ((profile as any).is_pro && profile.premium_until && new Date(profile.premium_until) < now) {
+        updateData.is_pro = false;
+        needsUpdate = true;
+    }
 
     // Check if premium has expired
     if (profile.is_premium && profile.premium_until && new Date(profile.premium_until) < now) {
         updateData.is_premium = false;
         needsUpdate = true;
+    }
+
+    // PRO users have unlimited credits, skip reset
+    const isProNow = updateData.is_pro !== undefined ? updateData.is_pro : (profile as any).is_pro;
+    if (isProNow) {
+        if (needsUpdate) {
+            const updated = await prisma.profile.update({
+                where: { id: userId },
+                data: updateData,
+            });
+            return updated;
+        }
+        return profile;
     }
 
     // Check if we need to reset credits (new day)
@@ -43,9 +63,9 @@ export async function checkAndResetCredits(userId: string) {
             updateData.credits = PREMIUM_DAILY_CREDITS;
             updateData.last_reset_date = now;
             needsUpdate = true;
-        } else if (profile.last_reset_date.getTime() !== today.getTime() && profile.is_premium) {
-            // Edge case: if they just lost premium today, we should probably record that we noticed
-            // but we don't give them daily credits anymore.
+        } else {
+            // Free user daily reset
+            updateData.credits = Math.max(profile.credits, FREE_DAILY_CREDITS);
             updateData.last_reset_date = now;
             needsUpdate = true;
         }

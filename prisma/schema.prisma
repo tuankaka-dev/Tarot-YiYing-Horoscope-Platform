@@ -16,6 +16,7 @@ model Profile {
   is_banned       Boolean   @default(false)
   credits         Int       @default(10)
   is_premium      Boolean   @default(false)
+  is_pro          Boolean   @default(false)
   premium_until   DateTime?
   last_reset_date DateTime  @default(now())
   created_at      DateTime  @default(now())
@@ -33,7 +34,7 @@ model Transaction {
   amount_vnd     Int      @default(0)
   credits_change Int      @default(0)
   status         String   @default("pending") // "pending" | "success" | "failed"
-  type           String   // "premium_weekly" | "credit_purchase" | "daily_reset"
+  type           String   // "premium_weekly" | "pro_lifetime" | "credit_purchase" | "daily_reset"
   payos_order_id String?  @unique
   created_at     DateTime @default(now())
 
@@ -87,4 +88,14 @@ model UserHistory {
   changing_hexagram    Hexagram? @relation("ChangingHexagram", fields: [changing_hexagram_id], references: [id])
 
   @@map("user_histories")
+}
+
+model SystemNotification {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  content    String?  @db.Text
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  @@map("system_notifications")
 }

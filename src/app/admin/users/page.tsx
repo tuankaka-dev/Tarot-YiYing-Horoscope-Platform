@@ -19,7 +19,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Users, Ban, CheckCircle, Loader2 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Users, Ban, CheckCircle, Loader2, Coins, Crown, Pencil, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserItem {
@@ -29,6 +37,10 @@ interface UserItem {
     role: string;
     is_banned: boolean;
     created_at: string;
+    credits: number;
+    is_premium: boolean;
+    is_pro: boolean;
+    premium_until: string | null;
     _count: { histories: number };
 }
 
@@ -37,6 +49,16 @@ export default function AdminUsersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    
+    const [creditDialogUser, setCreditDialogUser] = useState<UserItem | null>(null);
+    const [creditAmount, setCreditAmount] = useState('');
+    const [isUpdatingCredits, setIsUpdatingCredits] = useState(false);
+
+    // Package management dialog
+    const [packageDialogUser, setPackageDialogUser] = useState<UserItem | null>(null);
+    const [selectedTier, setSelectedTier] = useState<'free' | 'premium' | 'pro'>('free');
+    const [packageExpiry, setPackageExpiry] = useState('');
+    const [isUpdatingPackage, setIsUpdatingPackage] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -78,6 +100,78 @@ export default function AdminUsersPage() {
             toast.error('Đã xảy ra lỗi');
         } finally {
             setUpdatingId(null);
+        }
+    };
+
+    const handleUpdateCredits = async () => {
+        if (!creditDialogUser || !creditAmount) return;
+        setIsUpdatingCredits(true);
+        try {
+            const res = await fetch(`/api/admin/users/${creditDialogUser.id}/credits`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: Number(creditAmount) })
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setUsers(prev => prev.map(u => u.id === creditDialogUser.id ? { ...u, credits: updated.credits } : u));
+                toast.success('Đã cập nhật số dư');
+                setCreditDialogUser(null);
+                setCreditAmount('');
+            } else {
+                toast.error('Cập nhật thất bại');
+            }
+        } catch {
+            toast.error('Lỗi khi cập nhật số dư');
+        } finally {
+            setIsUpdatingCredits(false);
+        }
+    };
+
+    const openPackageDialog = (user: UserItem) => {
+        setPackageDialogUser(user);
+        if (user.is_pro) {
+            setSelectedTier('pro');
+        } else if (user.is_premium) {
+            setSelectedTier('premium');
+        } else {
+            setSelectedTier('free');
+        }
+        setPackageExpiry(user.premium_until ? new Date(user.premium_until).toISOString().slice(0, 10) : '');
+    };
+
+    const handleUpdatePackage = async () => {
+        if (!packageDialogUser) return;
+        setIsUpdatingPackage(true);
+        try {
+            const data: Record<string, any> = {
+                userId: packageDialogUser.id,
+                is_premium: selectedTier === 'premium',
+                is_pro: selectedTier === 'pro',
+                premium_until: selectedTier !== 'free' && packageExpiry ? packageExpiry : null,
+            };
+
+            const res = await fetch('/api/admin/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                setUsers(prev =>
+                    prev.map(u => u.id === packageDialogUser.id ? { ...u, ...updated } : u)
+                );
+                toast.success('Đã cập nhật gói đăng ký');
+                setPackageDialogUser(null);
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Cập nhật thất bại');
+            }
+        } catch {
+            toast.error('Lỗi khi cập nhật gói');
+        } finally {
+            setIsUpdatingPackage(false);
         }
     };
 
@@ -140,6 +234,8 @@ export default function AdminUsersPage() {
                                 <TableRow className="border-border/50 hover:bg-transparent">
                                     <TableHead>Người dùng</TableHead>
                                     <TableHead>Vai trò</TableHead>
+                                    <TableHead>Số dư xu</TableHead>
+                                    <TableHead>Gói Đăng Ký</TableHead>
                                     <TableHead className="hidden md:table-cell">Số lần gieo</TableHead>
                                     <TableHead className="hidden sm:table-cell">Trạng thái</TableHead>
                                     <TableHead className="hidden lg:table-cell">Ngày tham gia</TableHead>
@@ -169,6 +265,79 @@ export default function AdminUsersPage() {
                                                     <SelectItem value="admin">Quản trị</SelectItem>
                                                 </SelectContent>
                                             </Select>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-mystic-gold">{user.credits}</span>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="w-6 h-6 hover:bg-mystic-gold/10 hover:text-mystic-gold"
+                                                    onClick={() => setCreditDialogUser(user)}
+                                                    title="Tặng/Trừ Xu"
+                                                >
+                                                    <Coins className="w-3 h-3" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.is_pro ? (
+                                                <div className="flex items-center gap-1.5 min-w-max">
+                                                    <Badge className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/20 shadow-none px-2 py-0.5 font-bold">
+                                                        <Zap className="w-3 h-3 mr-1" />
+                                                        PRO
+                                                    </Badge>
+                                                    {user.premium_until && (
+                                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                            đến {new Date(user.premium_until).toLocaleDateString('vi-VN')}
+                                                        </span>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="w-5 h-5 hover:bg-amber-500/10 hover:text-amber-500"
+                                                        onClick={() => openPackageDialog(user)}
+                                                        title="Chỉnh sửa gói"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : user.is_premium ? (
+                                                <div className="flex items-center gap-1.5 min-w-max">
+                                                    <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20 shadow-none px-2 py-0.5">
+                                                        Premium
+                                                    </Badge>
+                                                    {user.premium_until && (
+                                                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                                            đến {new Date(user.premium_until).toLocaleDateString('vi-VN')}
+                                                        </span>
+                                                    )}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="w-5 h-5 hover:bg-amber-500/10 hover:text-amber-500"
+                                                        onClick={() => openPackageDialog(user)}
+                                                        title="Chỉnh sửa gói"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Badge variant="outline" className="text-muted-foreground border-border/50 bg-background/50 font-normal">
+                                                        Cơ bản
+                                                    </Badge>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="w-5 h-5 hover:bg-amber-500/10 hover:text-amber-500"
+                                                        onClick={() => openPackageDialog(user)}
+                                                        title="Chỉnh sửa gói"
+                                                    >
+                                                        <Pencil className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell className="hidden md:table-cell">
                                             <span className="text-mystic-gold">{user._count.histories}</span>
@@ -219,6 +388,95 @@ export default function AdminUsersPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <Dialog open={!!creditDialogUser} onOpenChange={(open) => !open && setCreditDialogUser(null)}>
+                <DialogContent className="sm:max-w-md bg-card border-mystic-gold/20">
+                    <DialogHeader>
+                        <DialogTitle>Tặng/Trừ Xu</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Đang điều chỉnh cho: <span className="font-medium text-foreground">{creditDialogUser?.full_name || creditDialogUser?.email}</span>
+                        </p>
+                        <Input 
+                            type="number" 
+                            placeholder="Số xu (+ để cộng, - để trừ)" 
+                            value={creditAmount}
+                            onChange={(e) => setCreditAmount(e.target.value)}
+                            className="bg-background/50 border-mystic-gold/30 focus-visible:ring-mystic-gold/50"
+                        />
+                        <p className="text-xs text-muted-foreground">Ví dụ: Nhập `100` để cộng 100 xu, `-50` để trừ 50 xu.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setCreditDialogUser(null)} disabled={isUpdatingCredits}>Hủy</Button>
+                        <Button 
+                            onClick={handleUpdateCredits} 
+                            disabled={!creditAmount || isUpdatingCredits}
+                            className="bg-mystic-gold text-black hover:bg-amber-500"
+                        >
+                            {isUpdatingCredits ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Xác nhận'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Package Management Dialog */}
+            <Dialog open={!!packageDialogUser} onOpenChange={(open) => !open && setPackageDialogUser(null)}>
+                <DialogContent className="sm:max-w-md bg-card border-mystic-gold/20">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Crown className="w-5 h-5 text-mystic-gold" />
+                            Quản Lý Gói Đăng Ký
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Đang điều chỉnh cho: <span className="font-medium text-foreground">{packageDialogUser?.full_name || packageDialogUser?.email}</span>
+                        </p>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Chọn gói</label>
+                            <Select
+                                value={selectedTier}
+                                onValueChange={(v) => setSelectedTier(v as 'free' | 'premium' | 'pro')}
+                            >
+                                <SelectTrigger className="bg-background/50 border-mystic-gold/30">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="free">🆓 Miễn Phí (Free)</SelectItem>
+                                    <SelectItem value="premium">👑 Premium (Tuần)</SelectItem>
+                                    <SelectItem value="pro">⚡ PRO (Tháng - Không giới hạn)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {selectedTier !== 'free' && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Ngày hết hạn</label>
+                                <Input
+                                    type="date"
+                                    value={packageExpiry}
+                                    onChange={(e) => setPackageExpiry(e.target.value)}
+                                    className="bg-background/50 border-mystic-gold/30 focus-visible:ring-mystic-gold/50"
+                                    min={new Date().toISOString().slice(0, 10)}
+                                />
+                                <p className="text-xs text-muted-foreground">Để trống nếu không giới hạn thời gian.</p>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setPackageDialogUser(null)} disabled={isUpdatingPackage}>Hủy</Button>
+                        <Button
+                            onClick={handleUpdatePackage}
+                            disabled={isUpdatingPackage}
+                            className="bg-mystic-gold text-black hover:bg-amber-500"
+                        >
+                            {isUpdatingPackage ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Lưu Thay Đổi'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

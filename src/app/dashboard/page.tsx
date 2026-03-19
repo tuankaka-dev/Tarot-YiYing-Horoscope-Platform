@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { History, Trash2, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
+import { History, Trash2, ChevronDown, ChevronUp, BookOpen, Coins, Sun, Bell, Calendar, Crown, Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useAuthStore } from '@/stores/auth-store';
+import { useRouter } from 'next/navigation';
 
 interface HistoryItem {
     id: string;
@@ -31,13 +33,28 @@ interface HistoryItem {
 }
 
 export default function DashboardPage() {
+    const { profile } = useAuthStore();
+    const router = useRouter();
     const [histories, setHistories] = useState<HistoryItem[]>([]);
+    const [systemNotifs, setSystemNotifs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [upgradingTier, setUpgradingTier] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchHistory();
+        const loadAll = async () => {
+            await Promise.all([fetchHistory(), fetchNotifs()]);
+            setIsLoading(false);
+        };
+        loadAll();
     }, []);
+
+    const fetchNotifs = async () => {
+        try {
+            const res = await fetch('/api/notifications');
+            if (res.ok) setSystemNotifs(await res.json());
+        } catch { }
+    };
 
     const fetchHistory = async () => {
         try {
@@ -48,8 +65,6 @@ export default function DashboardPage() {
             }
         } catch (error) {
             console.error('Lỗi khi tải lịch sử:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -65,10 +80,226 @@ export default function DashboardPage() {
         }
     };
 
+    const handleUpgrade = async (tier: 'premium_weekly' | 'pro_monthly' = 'premium_weekly', e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        if (upgradingTier) return;
+        setUpgradingTier(tier);
+        try {
+            const res = await fetch('/api/payment/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tier })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                } else {
+                    toast.error('Giao diện thanh toán chưa được khởi tạo. Vui lòng thử lại.');
+                }
+            } else {
+                const err = await res.json().catch(() => null);
+                toast.error(err?.error || 'Lỗi tạo link thanh toán. Kiểm tra lại Key PayOS.');
+            }
+        } catch {
+            toast.error('Lỗi kết nối, vui lòng thử lại.');
+        } finally {
+            setUpgradingTier(null);
+        }
+    };
+
     return (
         <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
+
+
+                {/* Dashboard Grid Card */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+                    {/* Box 1: Xu & Gói */}
+                    <Card
+                        className="bg-card/30 backdrop-blur border-mystic-gold/20 flex flex-col min-h-[220px] hover:border-mystic-gold/40 transition-all duration-300 relative overflow-hidden shadow-sm group"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-mystic-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <CardHeader className="pb-2 pt-5 px-5">
+                            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-mystic-gold">
+                                <Coins className="w-5 h-5 inline-block -mt-1 mr-1" />
+                                Xu & Gói Đăng Ký
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex flex-col p-5 pt-2">
+                            {/* Top row: Balance */}
+                            <div className="flex items-end justify-between mb-3">
+                                <div className="flex items-baseline gap-1.5">
+                                    <span className={`font-bold text-foreground tracking-tight ${(profile as any)?.is_pro ? 'text-2xl md:text-3xl uppercase text-amber-500' : 'text-4xl md:text-5xl'}`}>
+                                        {(profile as any)?.is_pro ? 'Vô hạn' : (profile?.credits || 0)}
+                                    </span>
+                                    <span className="text-sm text-mystic-gold font-bold uppercase tracking-widest bg-mystic-gold/10 px-2 py-1 rounded-md">Xu</span>
+                                </div>
+                            </div>
+
+                            {/* Free Tier daily text */}
+                            <p className="text-xs text-muted-foreground mb-4 font-medium px-1">
+                                {(profile as any)?.is_pro ? (
+                                    <span>Bạn đang sử dụng gói <strong className="text-amber-500 font-bold uppercase">PRO Tháng</strong></span>
+                                ) : (
+                                    <>Mỗi ngày nhận miễn phí <strong className="text-mystic-gold font-bold">10 xu</strong>
+                                        {profile?.is_premium ? ' (Bạn đang sử dụng gói Premium)' : ' (Bạn đang sử dụng gói Free)'}.</>
+                                )}
+                            </p>
+
+                            {/* Bottom area: Premium CTA */}
+                            <div className="mt-auto bg-gradient-to-br from-amber-500/10 to-transparent p-4 rounded-xl border border-amber-500/20 shadow-inner">
+                                {(profile as any)?.is_pro ? (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
+                                            <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">PRO Active</span>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-tight font-medium">
+                                            Đặc quyền Vô hạn: Mọi tính năng đều khả dụng mà không tốn xu.
+                                        </p>
+                                    </div>
+                                ) : profile?.is_premium ? (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Crown className="w-4 h-4 text-amber-500" />
+                                                <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Premium Active</span>
+                                            </div>
+                                            <Button
+                                                size="xs"
+                                                variant="ghost"
+                                                className="h-6 text-[9px] text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 p-1 font-bold uppercase bg-amber-500/5 border border-amber-500/20"
+                                                onClick={(e) => handleUpgrade('pro_monthly', e)}
+                                                disabled={!!upgradingTier}
+                                            >
+                                                {upgradingTier === 'pro_monthly' ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Lên PRO'}
+                                            </Button>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-tight font-medium">
+                                            Bạn đang nhận 100 xu/ngày. Nâng cấp PRO để dùng Vô hạn!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-4">
+                                        {/* Premium Box */}
+                                        <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl space-y-3 relative overflow-hidden group/box">
+                                            <div className="flex items-center gap-2 text-amber-600/80">
+                                                <Crown className="w-4 h-4" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Gói Tuần</span>
+                                            </div>
+                                            <p className="text-xs font-medium text-foreground/80 leading-relaxed">
+                                                Nhận ngay <strong className="text-amber-600">100 xu</strong> mỗi ngày & gieo quẻ thoải mái hơn.
+                                            </p>
+                                            <Button
+                                                size="sm"
+                                                onClick={(e) => handleUpgrade('premium_weekly', e)}
+                                                disabled={!!upgradingTier}
+                                                className="w-full bg-gradient-to-r from-mystic-gold to-amber-500 hover:from-amber-400 hover:to-mystic-gold text-black font-bold text-[10px] uppercase tracking-widest shadow-sm h-10 transition-all active:scale-[0.98]"
+                                            >
+                                                {upgradingTier === 'premium_weekly' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+                                                Đăng Ký 50k/tuần
+                                            </Button>
+                                        </div>
+
+                                        {/* PRO Box */}
+                                        <div className="bg-orange-500/5 border border-orange-500/10 p-4 rounded-xl space-y-3 relative overflow-hidden group/box">
+                                            <div className="flex items-center gap-2 text-orange-600/80">
+                                                <Zap className="w-4 h-4 text-orange-500" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Gói Tháng</span>
+                                            </div>
+                                            <p className="text-xs font-medium text-foreground/80 leading-relaxed">
+                                                Dùng <strong className="text-orange-600">Vô Hạn</strong> không tốn xu & Luận giải AI chuyên sâu.
+                                            </p>
+                                            <Button
+                                                size="sm"
+                                                onClick={(e) => handleUpgrade('pro_monthly', e)}
+                                                disabled={!!upgradingTier}
+                                                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-[10px] uppercase tracking-widest shadow-md h-10 gold-glow transition-all active:scale-[0.98]"
+                                            >
+                                                {upgradingTier === 'pro_monthly' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                                                Đăng Ký 100k/tháng
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Box 2: Ngày đẹp giờ đẹp */}
+                    <Card className="bg-card/30 backdrop-blur border-mystic-purple/20 flex flex-col min-h-[220px] hover:border-mystic-purple/40 transition-colors relative overflow-hidden group shadow-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-mystic-purple/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <CardHeader className="pb-2 pt-5 px-5">
+                            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-mystic-purple">
+                                <Sun className="w-5 h-5 inline-block -mt-1 mr-1" />
+                                Ngày Giờ Tốt Hôm Nay
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex flex-col p-5 pt-2">
+                            <div className="flex items-center gap-4 mb-4 bg-background/30 p-4 rounded-xl border border-mystic-purple/10">
+                                <div className="p-3 bg-mystic-purple/10 rounded-full shrink-0">
+                                    <Calendar className="w-6 h-6 text-mystic-purple" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-sm leading-tight text-foreground/90">
+                                        {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </p>
+                                    <p className="text-xs font-medium text-mystic-gold mt-1 uppercase tracking-wider">Ngày Đại An Tốt Khảo</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-background/50 p-4 rounded-xl border border-border/50 flex flex-col justify-center flex-1 shadow-inner">
+                                <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                    <Sun className="w-3 h-3 text-amber-500" />
+                                    Giờ Đẹp Hợp Với Bạn
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Tý (23-1)</Badge>
+                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Sửu (1-3)</Badge>
+                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Mão (5-7)</Badge>
+                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Ngọ (11-13)</Badge>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Box 3: Thông báo */}
+                    <Card className="bg-card/30 backdrop-blur border-border/40 flex flex-col min-h-[220px] hover:border-border/80 transition-colors relative overflow-hidden group shadow-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        <CardHeader className="pb-3 pt-5 px-5">
+                            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground/90">
+                                <Bell className="w-5 h-5 inline-block -mt-1 mr-1 text-amber-500" />
+                                Thông Báo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 overflow-hidden p-5 pt-0">
+                            {systemNotifs.length > 0 ? (
+                                <div className="space-y-4 overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
+                                    {systemNotifs.map((n, i) => (
+                                        <div key={n.id} className={`flex gap-3 bg-background/40 p-3 rounded-xl border border-border/50 transition-all hover:bg-background/70 ${i > 0 && n.title.length < 50 ? 'opacity-85' : ''}`}>
+                                            <div className="w-2 h-2 rounded-full bg-mystic-gold mt-1.5 shrink-0 shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold line-clamp-2 leading-tight text-foreground/90" title={n.content || ''}>{n.title}</p>
+                                                <p className="text-[11px] font-medium text-mystic-gold/80 mt-1 uppercase tracking-wider">
+                                                    {new Date(n.created_at).toLocaleDateString('vi-VN')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex h-full items-center justify-center flex-col gap-2 text-muted-foreground/50">
+                                    <Bell className="w-8 h-8 opacity-20" />
+                                    <p className="text-sm font-medium">Không có thông báo mới</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                </div>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                         <h1 className="text-2xl md:text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
@@ -85,7 +316,6 @@ export default function DashboardPage() {
                         </Button>
                     </Link>
                 </div>
-
                 {/* History list */}
                 {isLoading ? (
                     <div className="space-y-4">
@@ -102,7 +332,7 @@ export default function DashboardPage() {
                         </p>
                         <Link href="/divine">
                             <Button className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 text-black font-semibold">
-                                    Gieo Quẻ Đầu Tiên
+                                Gieo Quẻ Đầu Tiên
                             </Button>
                         </Link>
                     </Card>

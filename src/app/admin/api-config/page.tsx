@@ -179,7 +179,7 @@ export default function AdminApiConfigPage() {
                         Cấu Hình API
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Quản lý kết nối AI cho tính năng giải quẻ
+                        Quản lý kết nối cho tính năng giải quẻ
                     </p>
                 </div>
 
@@ -292,7 +292,7 @@ export default function AdminApiConfigPage() {
                     <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Chưa có cấu hình API</h3>
                     <p className="text-muted-foreground mb-6">
-                        Thêm nhà cung cấp AI để kích hoạt tính năng giải quẻ.
+                        Thêm nhà cung cấp API để kích hoạt tính năng giải quẻ.
                     </p>
                 </Card>
             ) : (
@@ -301,8 +301,8 @@ export default function AdminApiConfigPage() {
                         <Card
                             key={config.id}
                             className={`bg-card/30 backdrop-blur transition-all duration-300 ${config.status === 'active'
-                                    ? 'border-green-500/30 mystic-glow'
-                                    : 'border-mystic-purple/20'
+                                ? 'border-green-500/30 mystic-glow'
+                                : 'border-mystic-purple/20'
                                 }`}
                         >
                             <CardHeader className="flex flex-row items-center justify-between">

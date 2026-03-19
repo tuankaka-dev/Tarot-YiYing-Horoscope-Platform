@@ -18,8 +18,33 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Pre-check and deduct 10 xu for deep AI interpretation
+        const currentProfile = await prisma.profile.findUnique({
+            where: { id: user.id },
+            select: { credits: true, is_pro: true }
+        } as any);
+
+        if (!currentProfile) {
+            return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+        }
+
+        // PRO users don't need credits and don't get deducted
+        if (!(currentProfile as any).is_pro) {
+            if (currentProfile.credits < 10) {
+                return NextResponse.json(
+                    { error: 'Không đủ xu để giải quẻ chuyên sâu. Vui lòng mua thêm xu hoặc nâng cấp Premium.' },
+                    { status: 402 }
+                );
+            }
+
+            await prisma.profile.update({
+                where: { id: user.id },
+                data: { credits: { decrement: 10 } }
+            });
+        }
+
         const body = await request.json();
-        const { mainHexagramId, changingHexagramId, changingLines, question } = body;
+        const { mainHexagramId, changingHexagramId, changingLines, question, historyId } = body;
 
         if (!mainHexagramId || !question) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -61,6 +86,13 @@ export async function POST(request: NextRequest) {
             }
         } catch (aiError) {
             console.error('AI API call failed:', aiError);
+            
+            // Refund 10 xu
+            await prisma.profile.update({
+                where: { id: user.id },
+                data: { credits: { increment: 10 } }
+            });
+
             const message = aiError instanceof Error ? aiError.message : 'Lỗi không xác định';
             return NextResponse.json(
                 { error: `Lỗi khi gọi AI: ${message}` },
@@ -69,16 +101,28 @@ export async function POST(request: NextRequest) {
         }
 
         // Save to history
-        await prisma.userHistory.create({
-            data: {
-                user_id: user.id,
-                question,
-                main_hexagram_id: mainHexagramId,
-                changing_hexagram_id: changingHexagramId,
-                changing_lines: changingLines || [],
-                ai_response: aiResponseText,
-            },
-        });
+        try {
+            if (historyId) {
+                await prisma.userHistory.update({
+                    where: { id: historyId },
+                    data: { ai_response: aiResponseText },
+                });
+            } else {
+                await prisma.userHistory.create({
+                    data: {
+                        user_id: user.id,
+                        question,
+                        main_hexagram_id: mainHexagramId,
+                        changing_hexagram_id: changingHexagramId,
+                        changing_lines: changingLines || [],
+                        ai_response: aiResponseText,
+                    },
+                });
+            }
+        } catch (historyErr) {
+            console.error('Failed to update/create history:', historyErr);
+            // Non-fatal error, we still return the AI response to user
+        }
 
         // Return as streamed text
         return new Response(aiResponseText, {

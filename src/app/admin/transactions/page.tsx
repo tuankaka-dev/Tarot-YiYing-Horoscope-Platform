@@ -41,6 +41,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 
 const typeLabels: Record<string, string> = {
     premium_weekly: 'Premium Tuần',
+    pro_monthly: 'PRO Tháng',
     credit_purchase: 'Mua Xu',
     daily_reset: 'Reset Hàng Ngày',
 };

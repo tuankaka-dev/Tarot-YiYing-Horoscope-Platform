@@ -23,8 +23,9 @@ export async function GET() {
     }
 
     try {
-        // Get all transactions with user profile
+        // Get only successful transactions with user profile
         const transactions = await prisma.transaction.findMany({
+            where: { status: 'success' },
             orderBy: { created_at: 'desc' },
             take: 100,
             include: {
@@ -37,17 +38,14 @@ export async function GET() {
             },
         });
 
-        // Calculate aggregate stats
-        const successTransactions = transactions.filter(t => t.status === 'success');
-        const totalRevenue = successTransactions.reduce((sum, t) => sum + t.amount_vnd, 0);
-        const totalSuccess = successTransactions.length;
-        const totalPending = transactions.filter(t => t.status === 'pending').length;
+        // Calculate aggregate stats (all are successful)
+        const totalRevenue = transactions.reduce((sum, t) => sum + t.amount_vnd, 0);
+        const totalSuccess = transactions.length;
 
         return NextResponse.json({
             stats: {
                 totalRevenue,
                 totalSuccess,
-                totalPending,
             },
             transactions,
         });

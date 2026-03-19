@@ -35,8 +35,14 @@ export async function POST(request: NextRequest) {
         // Check if payment was successful (code "00" means success)
         if (webhookData.code === '00') {
             // Payment success — update transaction + profile
+            const isPro = transaction.type === 'pro_monthly';
             const premiumUntil = new Date();
-            premiumUntil.setDate(premiumUntil.getDate() + 7); // 7 days premium
+            
+            if (isPro) {
+                premiumUntil.setDate(premiumUntil.getDate() + 30); // 30 days for PRO monthly
+            } else {
+                premiumUntil.setDate(premiumUntil.getDate() + 7); // 7 days premium for weekly
+            }
 
             await prisma.$transaction([
                 // Update transaction status
@@ -44,13 +50,14 @@ export async function POST(request: NextRequest) {
                     where: { id: transaction.id },
                     data: { status: 'success' },
                 }),
-                // Update user profile: set premium and add credits
-                prisma.profile.update({
+                // Update user profile: set premium/pro and add credits
+                (prisma.profile.update as any)({
                     where: { id: transaction.user_id },
                     data: {
-                        is_premium: true,
+                        is_pro: isPro ? true : undefined,
+                        is_premium: !isPro ? true : undefined,
                         premium_until: premiumUntil,
-                        credits: { increment: transaction.credits_change },
+                        credits: !isPro ? { increment: (transaction.credits_change as any) } : undefined,
                     },
                 }),
             ]);
