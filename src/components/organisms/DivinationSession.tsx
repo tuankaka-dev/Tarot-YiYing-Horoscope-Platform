@@ -11,7 +11,7 @@ import { DivinationTube } from '@/components/molecules/DivinationTube';
 import { useAuthStore } from '@/stores/auth-store';
 import { tossThreeCoins, buildDivination } from '@/lib/divination';
 import type { Hexagram, LineType, CoinTossResult } from '@/types';
-import { Loader2, RotateCcw, Send } from 'lucide-react';
+import { Loader2, RotateCcw, Send, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 
 function getDriveEmbedUrl(url: string | null | undefined): string | null {
@@ -77,6 +77,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             return;
         }
 
+        // Check if user has enough credits (skip for PRO users)
+        if (!(profile as any)?.is_pro && profile && profile.credits < 10) {
+            toast.error('Không đủ xu để gieo quẻ. Vui lòng nâng cấp gói đăng ký.');
+            setTimeout(() => {
+                window.location.href = '/#pricing';
+            }, 1500);
+            return;
+        }
+
         try {
             const res = await fetch('/api/credits/deduct', {
                 method: 'POST',
@@ -86,7 +95,14 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
-                toast.error(data.error || 'Trừ xu thất bại. Bạn có đủ xu không?');
+                if (res.status === 402) {
+                    toast.error('Không đủ xu để gieo quẻ. Vui lòng nâng cấp gói đăng ký.');
+                    setTimeout(() => {
+                        window.location.href = '/#pricing';
+                    }, 1500);
+                } else {
+                    toast.error(data.error || 'Trừ xu thất bại. Bạn có đủ xu không?');
+                }
                 return;
             }
 
@@ -152,14 +168,20 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const requestInterpretation = async () => {
         if (!mainHexagram || !divResult) return;
 
+        // Check credits before proceeding
+        if (!(profile as any)?.is_pro && profile && profile.credits < 10) {
+            toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp gói đăng ký.');
+            setTimeout(() => {
+                window.location.href = '/#pricing';
+            }, 1500);
+            return;
+        }
+
         // Optimistic UI update for credits (deduct 10 xu immediately)
-        if (profile && profile.is_pro) {
+        if (profile && (profile as any).is_pro) {
             // PRO users have unlimited usage - skip deduction
         } else if (profile && profile.credits >= 10) {
             useAuthStore.setState({ profile: { ...profile, credits: profile.credits - 10 } });
-        } else if (profile && profile.credits < 10) {
-            toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp Premium.');
-            return;
         }
 
         setIsInterpreting(true);
@@ -198,7 +220,10 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                 fetchProfile();
 
                 if (res.status === 402) {
-                    toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp Premium.');
+                    toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp gói đăng ký.');
+                    setTimeout(() => {
+                        window.location.href = '/#pricing';
+                    }, 1500);
                 }
                 const errData = await res.json().catch(() => null);
                 setAiResponse(errData?.error || 'Xin lỗi, không thể kết nối với AI giải quẻ. Vui lòng thử lại sau.');
@@ -375,15 +400,37 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                         >
                             <Card className="bg-card/30 backdrop-blur border-mystic-gold/30 mystic-glow">
                                 <CardContent className="p-8 space-y-8">
-                                    <div className="text-center">
+                                    <div className="text-center space-y-3">
                                         <h2 className="text-2xl font-bold text-mystic-gold text-gold-glow">
                                             Quẻ Đã Thành
                                         </h2>
+                                        <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
+                                                <TrendingUp className="w-3.5 h-3.5 text-green-600" />
+                                                <span className="font-bold text-green-600">Đại Cát</span>
+                                                <span className="text-muted-foreground">- Rất tốt</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/5 border border-green-500/10">
+                                                <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                                                <span className="font-bold text-green-500">Cát</span>
+                                                <span className="text-muted-foreground">- Thuận lợi</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                                <Minus className="w-3.5 h-3.5 text-blue-500" />
+                                                <span className="font-bold text-blue-500">Bình Hòa</span>
+                                                <span className="text-muted-foreground">- Cân bằng</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/5 border border-red-500/10">
+                                                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+                                                <span className="font-bold text-red-500">Hung</span>
+                                                <span className="text-muted-foreground">- Thận trọng</span>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+                                    <div className="flex flex-col md:flex-row items-start justify-center gap-8">
                                         {/* Main hexagram */}
-                                        <div className="text-center space-y-3">
+                                        <div className="text-center space-y-3 flex-1 w-full">
                                             <p className="text-sm text-muted-foreground">Quẻ Chính</p>
                                             <div className="w-40 mx-auto">
                                                 <HexagramDisplay
@@ -395,7 +442,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                             {mainHexagram && (
                                                 <div>
                                                     <p className="text-2xl font-bold text-mystic-gold">
-                                                        {mainHexagram.name}
+                                                        Quẻ {mainHexagram.id}: {mainHexagram.name}
                                                     </p>
                                                     <p className="text-sm font-medium text-foreground/70">
                                                         {mainHexagram.trigram_above} / {mainHexagram.trigram_below}
@@ -408,7 +455,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                             <img
                                                                 src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
                                                                 alt={mainHexagram.name}
-                                                                className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
+                                                                className="rounded-md w-full max-w-[450px] h-auto object-contain border border-mystic-gold/20 shadow-sm"
                                                             />
                                                         </div>
                                                     )}
@@ -419,15 +466,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         {/* Changing hexagram */}
                                         {changingHexagram && (
                                             <>
-                                                <div className="text-3xl text-mystic-purple animate-pulse"></div>
-                                                <div className="text-center space-y-3">
+                                                <div className="text-3xl text-mystic-purple animate-pulse self-center md:self-start md:mt-20">→</div>
+                                                <div className="text-center space-y-3 flex-1 w-full">
                                                     <p className="text-sm text-muted-foreground">Quẻ Biến</p>
                                                     <div className="w-40 mx-auto">
                                                         <HexagramDisplay lines={changingHexLines} animated={true} />
                                                     </div>
                                                     <div>
                                                         <p className="text-2xl font-bold text-mystic-gold">
-                                                            {changingHexagram.name}
+                                                            Quẻ {changingHexagram.id}: {changingHexagram.name}
                                                         </p>
                                                         <p className="text-sm font-medium text-foreground/70">
                                                             {changingHexagram.trigram_above} / {changingHexagram.trigram_below}
@@ -440,7 +487,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                                 <img
                                                                     src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
                                                                     alt={changingHexagram.name}
-                                                                    className="rounded-md w-auto h-auto max-w-full sm:max-w-[400px] max-h-[500px] object-contain border border-mystic-gold/20 shadow-sm"
+                                                                    className="rounded-md w-full max-w-[450px] h-auto object-contain border border-mystic-gold/20 shadow-sm"
                                                                 />
                                                             </div>
                                                         )}

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, Save, Loader2, Coins, Sun, Bell, Calendar, Crown } from 'lucide-react';
+import { User, Save, Loader2, Coins, Sun, Bell, Calendar, Crown, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -82,12 +82,16 @@ export default function ProfilePage() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <CardTitle>{profile?.full_name || 'Người dùng'}</CardTitle>
-                                    {profile?.is_premium ? (
+                                    {(profile as any)?.is_pro ? (
+                                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
+                                            <Crown className="w-3 h-3" /> Gói Tháng (PRO)
+                                        </Badge>
+                                    ) : profile?.is_premium ? (
                                         <Badge className="bg-mystic-gold/10 text-mystic-gold border-mystic-gold/20 flex items-center gap-1">
-                                            <Crown className="w-3 h-3" /> Premium
+                                            <Crown className="w-3 h-3" /> Gói Tuần
                                         </Badge>
                                     ) : (
-                                        <Badge variant="outline" className="text-muted-foreground">Miễn phí</Badge>
+                                        <Badge variant="outline" className="text-muted-foreground">Gói Miễn Phí</Badge>
                                     )}
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>

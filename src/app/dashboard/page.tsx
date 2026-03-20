@@ -142,10 +142,11 @@ export default function DashboardPage() {
                             {/* Free Tier daily text */}
                             <p className="text-xs text-muted-foreground mb-4 font-medium px-1">
                                 {(profile as any)?.is_pro ? (
-                                    <span>Bạn đang sử dụng gói <strong className="text-amber-500 font-bold uppercase">PRO Tháng</strong></span>
+                                    <span>Bạn đang sử dụng gói <strong className="text-amber-500 font-bold uppercase">Gói Tháng (PRO)</strong></span>
+                                ) : profile?.is_premium ? (
+                                    <span>Bạn đang sử dụng gói <strong className="text-mystic-gold font-bold">Gói Tuần (Premium)</strong></span>
                                 ) : (
-                                    <>Mỗi ngày nhận miễn phí <strong className="text-mystic-gold font-bold">10 xu</strong>
-                                        {profile?.is_premium ? ' (Bạn đang sử dụng gói Premium)' : ' (Bạn đang sử dụng gói Free)'}.</>
+                                    <>Mỗi ngày nhận miễn phí <strong className="text-mystic-gold font-bold">10 xu</strong> (Bạn đang sử dụng <strong>Gói Miễn Phí</strong>).</>
                                 )}
                             </p>
 
@@ -155,7 +156,7 @@ export default function DashboardPage() {
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
                                             <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
-                                            <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">PRO Active</span>
+                                            <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Gói Tháng (PRO)</span>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground leading-tight font-medium">
                                             Đặc quyền Vô hạn: Mọi tính năng đều khả dụng mà không tốn xu.
@@ -166,7 +167,7 @@ export default function DashboardPage() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Crown className="w-4 h-4 text-amber-500" />
-                                                <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Premium Active</span>
+                                                <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Gói Tuần (Premium)</span>
                                             </div>
                                             <Button
                                                 size="xs"
@@ -179,7 +180,7 @@ export default function DashboardPage() {
                                             </Button>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground leading-tight font-medium">
-                                            Bạn đang nhận 100 xu/ngày. Nâng cấp PRO để dùng Vô hạn!
+                                            Bạn đang nhận 100 xu/ngày. Nâng cấp Gói Tháng (PRO) để dùng Vô hạn!
                                         </p>
                                     </div>
                                 ) : (

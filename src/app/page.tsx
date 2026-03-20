@@ -136,7 +136,7 @@ export default function LandingPage() {
 
 
       {/* Pricing / Premium Section */}
-      <section className="relative py-24 px-4 bg-mystic-purple/5 border-t border-mystic-purple/10">
+      <section id="pricing" className="relative py-24 px-4 bg-mystic-purple/5 border-t border-mystic-purple/10">
         <div className="max-w-4xl mx-auto">
           <motion.div
             className="text-center mb-12"
@@ -159,7 +159,7 @@ export default function LandingPage() {
             className="grid md:grid-cols-3 gap-6 items-stretch max-w-7xl mx-auto"
           >
             {/* Free Tier Card */}
-            <div className="bg-card/40 backdrop-blur border border-border/50 p-8 rounded-2xl text-center space-y-6 shadow-lg flex flex-col">
+            <div className="bg-card/60 backdrop-blur border border-border/50 p-8 rounded-2xl text-center space-y-6 shadow-lg flex flex-col">
               <div className="inline-flex items-center justify-center p-3 bg-muted rounded-full mb-2">
                 <Zap className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -226,11 +226,11 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
-                  Gieo quẻ tự do không lo giới hạn
+                  Bao gồm quyền lợi cơ bản được nâng cấp thêm
                 </li>
                 <li className="flex items-start gap-2 font-semibold text-mystic-gold py-1 bg-mystic-gold/5 rounded-lg px-2 -mx-2">
                   <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
-                  Luận giải chuyên sâu bằng AI
+                  Gieo quẻ - giải quẻ chuyên sâu, xem tử vi, xem tarot giới hạn lượt (hết xu)
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
@@ -244,7 +244,7 @@ export default function LandingPage() {
                 className="w-full h-12 text-base gap-2 bg-gradient-to-r from-mystic-gold to-amber-500 hover:from-amber-400 hover:to-mystic-gold text-black font-semibold shadow-md gold-glow relative z-10"
               >
                 {upgradingTier === 'premium_weekly' ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-                Mua Ngay
+                Đăng ký
               </Button>
             </div>
 
@@ -268,15 +268,16 @@ export default function LandingPage() {
               <ul className="text-left space-y-3 mt-4 mb-6 text-foreground flex-1">
                 <li className="flex items-start gap-2 font-bold text-amber-500 py-1 bg-amber-500/10 rounded-lg px-2 -mx-2">
                   <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  Sử dụng dịch vụ không cần xu (vô hạn)
+                  Sử dụng tất cả dịch vụ không cần xu
                 </li>
+                <li className="flex items-start gap-2  text-mystic-gold font-bold">
+                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                  Luận giải quẻ chuyên sâu, Xem Tử Vi, Xem Tarot hằng ngày không giới hạn lượt
+                </li>
+
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  Luận giải quẻ AI không giới hạn
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
-                  Mở khóa toàn bộ tính năng cao cấp
+                  Bao gồm các tính năng cơ bản được nâng cấp
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />

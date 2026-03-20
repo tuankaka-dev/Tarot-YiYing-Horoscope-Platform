@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         if (!(currentProfile as any).is_pro) {
             if (currentProfile.credits < 10) {
                 return NextResponse.json(
-                    { error: 'Không đủ xu để giải quẻ chuyên sâu. Vui lòng mua thêm xu hoặc nâng cấp Premium.' },
+                    { error: 'Không đủ xu để giải quẻ chuyên sâu. Vui lòng mua thêm xu hoặc nâng cấp Gói' },
                     { status: 402 }
                 );
             }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
             }
         } catch (aiError) {
             console.error('AI API call failed:', aiError);
-            
+
             // Refund 10 xu ONLY if user is not PRO
             if (!(currentProfile as any).is_pro) {
                 await prisma.profile.update({
