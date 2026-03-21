@@ -140,3 +140,19 @@ export interface ApiConfigCreate {
   headers?: Record<string, string>;
   status: 'active' | 'inactive';
 }
+
+// ============================================================
+// Tarot Types
+// ============================================================
+
+export interface TarotCard {
+  id: number;
+  name: string;
+  name_vi: string;
+  meaning: string;
+  image_url: string | null;
+  card_type: 'major' | 'minor';
+  suit: string | null;
+  number: number | null;
+  keywords: string;
+}

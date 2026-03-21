@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { HexagramDisplay } from '@/components/molecules/HexagramDisplay';
 import { DivinationTube } from '@/components/molecules/DivinationTube';
+import { PriceTag } from '@/components/atoms/PriceTag';
 import { useAuthStore } from '@/stores/auth-store';
 import { tossThreeCoins, buildDivination } from '@/lib/divination';
 import type { Hexagram, LineType, CoinTossResult } from '@/types';
@@ -46,7 +47,7 @@ interface DivinationSessionProps {
 type Phase = 'question' | 'shaking' | 'tossing' | 'result' | 'interpreting' | 'complete';
 
 export function DivinationSession({ hexagrams }: DivinationSessionProps) {
-    const { user, profile, fetchProfile } = useAuthStore();
+    const { user, profile, fetchProfile, isLoading: authLoading } = useAuthStore();
 
     const [question, setQuestion] = useState('');
     const [tosses, setTosses] = useState<CoinTossResult[]>([]);
@@ -271,6 +272,12 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                     </p>
                 </div>
 
+                {/* Show loading state while auth is initializing */}
+                {authLoading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-mystic-gold" />
+                    </div>
+                ) : (
                 <AnimatePresence mode="wait">
                     {/* PHASE 1: Question */}
                     {phase === 'question' && (
@@ -304,7 +311,12 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         disabled={!question.trim() || isShaking}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        {isShaking ? 'Đang chuẩn bị...' : `Bắt Đầu Gieo Quẻ ${profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}`}
+                                        {isShaking ? 'Đang chuẩn bị...' : (
+                                            <span className="flex items-center gap-2">
+                                                Bắt Đầu Gieo Quẻ
+                                                <PriceTag isPro={profile?.is_pro} price={10} />
+                                            </span>
+                                        )}
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -535,7 +547,10 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                 className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 px-8 text-lg gold-glow"
                                             >
                                                 <Send className="w-5 h-5" />
-                                                Giải quẻ chuyên sâu {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
+                                                <span className="flex items-center gap-2">
+                                                    Giải quẻ chuyên sâu
+                                                    <PriceTag isPro={profile?.is_pro} price={10} />
+                                                </span>
                                             </Button>
                                         )}
                                         <Button variant="outline" onClick={handleReset} className="gap-2 h-12 px-8 text-lg">
@@ -548,6 +563,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                         </motion.div>
                     )}
                 </AnimatePresence>
+                )}
             </div>
         </div>
     );

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { PriceTag } from '@/components/atoms/PriceTag';
 import { useAuthStore } from '@/stores/auth-store';
 import type { TarotCard } from '@/types';
 import { Loader2, RotateCcw, Send, Sparkles } from 'lucide-react';
@@ -18,7 +19,7 @@ type Phase = 'question' | 'spreading' | 'result';
 type SpreadType = 'one' | 'three' | 'five';
 
 export function TarotSession({ tarotCards }: TarotSessionProps) {
-    const { user, profile, fetchProfile } = useAuthStore();
+    const { user, profile, fetchProfile, isLoading: authLoading } = useAuthStore();
 
     const [question, setQuestion] = useState('');
     const [phase, setPhase] = useState<Phase>('question');
@@ -142,6 +143,12 @@ export function TarotSession({ tarotCards }: TarotSessionProps) {
                 </p>
             </div>
 
+            {/* Show loading state while auth is initializing */}
+            {authLoading ? (
+                <div className="flex justify-center items-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-mystic-gold" />
+                </div>
+            ) : (
             <AnimatePresence mode="wait">
                 {/* PHASE 1: Question */}
                 {phase === 'question' && (
@@ -179,7 +186,10 @@ export function TarotSession({ tarotCards }: TarotSessionProps) {
                                             className="gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold h-16 text-base"
                                         >
                                             <Sparkles className="w-5 h-5" />
-                                            1 Lá {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
+                                            <span className="flex items-center gap-2">
+                                                1 Lá
+                                                <PriceTag isPro={profile?.is_pro} price={10} />
+                                            </span>
                                         </Button>
                                         <Button
                                             onClick={() => handleSpread('three')}
@@ -187,7 +197,10 @@ export function TarotSession({ tarotCards }: TarotSessionProps) {
                                             className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold h-16 text-base"
                                         >
                                             <Sparkles className="w-5 h-5" />
-                                            3 Lá {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
+                                            <span className="flex items-center gap-2">
+                                                3 Lá
+                                                <PriceTag isPro={profile?.is_pro} price={10} />
+                                            </span>
                                         </Button>
                                         <Button
                                             onClick={() => handleSpread('five')}
@@ -195,7 +208,10 @@ export function TarotSession({ tarotCards }: TarotSessionProps) {
                                             className="gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold h-16 text-base"
                                         >
                                             <Sparkles className="w-5 h-5" />
-                                            5 Lá {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
+                                            <span className="flex items-center gap-2">
+                                                5 Lá
+                                                <PriceTag isPro={profile?.is_pro} price={10} />
+                                            </span>
                                         </Button>
                                     </div>
                                 </div>
@@ -341,6 +357,7 @@ export function TarotSession({ tarotCards }: TarotSessionProps) {
                     </motion.div>
                 )}
             </AnimatePresence>
+            )}
         </div>
     );
 }
