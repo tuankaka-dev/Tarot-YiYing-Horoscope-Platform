@@ -80,16 +80,49 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(url);
         }
 
-        // Check admin role via API claims rather than DB
-        let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
+        // 1. Check admin role via JWT claims
+        let isAdmin = false;
+        const userMetaRole = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role.toLowerCase() : '';
+        const appMetaRole = typeof user.app_metadata?.role === 'string' ? user.app_metadata.role.toLowerCase() : '';
 
-        if (!isAdmin) {
-            // Fallback for existing sessions before claims were implemented
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-            isAdmin = profile?.role === 'admin';
+        console.log('[Middleware] Checking Admin for user:', user.email);
+        console.log('[Middleware] User Metadata Role:', user.user_metadata?.role);
+        console.log('[Middleware] App Metadata Role:', user.app_metadata?.role);
+
+        if (userMetaRole === 'admin' || appMetaRole === 'admin') {
+            console.log('[Middleware] Granted via JWT Claims');
+            isAdmin = true;
         }
 
+        // 2. Nếu JWT không có quyền admin, gọi qua API trung gian chạy bằng Prisma (vì Prisma không hỗ trợ chạy trực tiếp trên Edge Middleware và tài khoản DB hiện tại đang chặn truy cập thẳng từ PostgREST)
         if (!isAdmin) {
+            try {
+                const res = await fetch(`${request.nextUrl.origin}/api/check-admin-role`, {
+                    headers: {
+                        cookie: request.headers.get('cookie') || '',
+                    },
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log('[Middleware] Fallback Profile API Result:', data);
+                    if (data.isAdmin === true) {
+                        console.log('[Middleware] Granted via API DB Fallback');
+                        isAdmin = true;
+                    }
+                } else {
+                    console.log('[Middleware] API Fallback returned status:', res.status);
+                }
+            } catch (err) {
+                console.error('Lỗi khi gọi API check-admin-role từ middleware:', err);
+            }
+        }
+
+        console.log('[Middleware] Final isAdmin result:', isAdmin);
+
+        // 3. Nếu cả JWT và database đều không phải admin thì mới không cho vô thật
+        if (!isAdmin) {
+            console.log('[Middleware] Access Denied. Redirecting to /');
             const url = request.nextUrl.clone();
             url.pathname = '/';
             return NextResponse.redirect(url);

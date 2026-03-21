@@ -12,8 +12,15 @@ async function verifyAdmin() {
 
     let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
     if (!isAdmin) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        isAdmin = profile?.role === 'admin';
+        try {
+            const profile = await prisma.profile.findUnique({
+                where: { id: user.id },
+                select: { role: true }
+            });
+            isAdmin = profile?.role === 'admin';
+        } catch (e) {
+            console.error('Admin API DB fallback error:', e);
+        }
     }
     if (!isAdmin) return null;
 

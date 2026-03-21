@@ -34,7 +34,7 @@ function getDriveEmbedUrl(url: string | null | undefined): string | null {
 
     if (fileId) {
         // Fallback robust endpoint for displaying images (circumvents strict viewing limitations)
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
     }
     return url;
 }
