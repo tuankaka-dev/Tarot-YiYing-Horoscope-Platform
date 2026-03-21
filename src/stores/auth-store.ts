@@ -28,11 +28,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
-            set({ user });
-            await get().fetchProfile();
+            // Set user immediately, don't wait for profile
+            set({ user, isLoading: false });
+            // Fetch profile in background (non-blocking)
+            get().fetchProfile();
+        } else {
+            set({ isLoading: false });
         }
-
-        set({ isLoading: false });
 
         // Listen for auth changes including token refresh
         supabase.auth.onAuthStateChange(async (event, session) => {
@@ -40,7 +42,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 set({ user: session.user });
                 // Only fetch profile on initial sign in, not on every token refresh
                 if (event === 'SIGNED_IN') {
-                    await get().fetchProfile();
+                    get().fetchProfile();
                 }
             } else if (event === 'SIGNED_OUT') {
                 set({ user: null, profile: null });

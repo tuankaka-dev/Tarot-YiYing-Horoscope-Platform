@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,6 +57,14 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const [isShaking, setIsShaking] = useState(false);
     const [isInterpreting, setIsInterpreting] = useState(false);
     const [historyId, setHistoryId] = useState<string | null>(null);
+
+    // Redirect if unauthenticated after loading finishes
+    useEffect(() => {
+        if (!authLoading && !user) {
+            toast.error('Vui lòng đăng nhập để gieo quẻ.');
+            window.location.href = '/login';
+        }
+    }, [authLoading, user]);
 
     // Build hexagram data from tosses
     const lines: LineType[] = tosses.map((t) => t.lineType);
