@@ -71,6 +71,8 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
 
     // Start shaking animation then auto-toss
     const startShaking = async () => {
+        if (isShaking) return;
+        
         if (!user) {
             toast.error('Vui lòng đăng nhập để gieo quẻ.');
             window.location.href = '/register';
@@ -85,6 +87,8 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             }, 1500);
             return;
         }
+
+        setIsShaking(true);
 
         try {
             const res = await fetch('/api/credits/deduct', {
@@ -103,6 +107,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                 } else {
                     toast.error(data.error || 'Trừ xu thất bại. Bạn có đủ xu không?');
                 }
+                setIsShaking(false);
                 return;
             }
 
@@ -110,6 +115,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             fetchProfile();
         } catch {
             toast.error('Lỗi kết nối. Vui lòng thử lại.');
+            setIsShaking(false);
             return;
         }
 
@@ -295,10 +301,10 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
 
                                     <Button
                                         onClick={startShaking}
-                                        disabled={!question.trim()}
+                                        disabled={!question.trim() || isShaking}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        Bắt Đầu Gieo Quẻ {profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}
+                                        {isShaking ? 'Đang chuẩn bị...' : `Bắt Đầu Gieo Quẻ ${profile?.is_pro ? '(Miễn phí PRO)' : '(10 xu)'}`}
                                     </Button>
                                 </CardContent>
                             </Card>

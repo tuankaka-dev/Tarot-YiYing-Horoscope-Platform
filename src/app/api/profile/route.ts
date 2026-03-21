@@ -3,14 +3,18 @@ import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 import { checkAndResetCredits } from '@/lib/credits';
 
-// GET /api/profile?userId=xxx
+// GET /api/profile
 // Auto-creates profile if it doesn't exist yet
-export async function GET(request: NextRequest) {
-    const userId = request.nextUrl.searchParams.get('userId');
+export async function GET() {
+    // Get user info strictly from Supabase Auth to prevent IDOR
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const userId = user.id;
 
     try {
         let profile = await prisma.profile.findUnique({
@@ -19,11 +23,7 @@ export async function GET(request: NextRequest) {
 
         // Auto-create profile if it doesn't exist
         if (!profile) {
-            // Get user info from Supabase Auth
-            const supabase = await createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user && user.id === userId) {
+            if (user) {
                 profile = await prisma.profile.create({
                     data: {
                         id: user.id,

@@ -11,14 +11,20 @@ export async function verifyAdmin() {
 
     if (!user) return null;
 
-    // Check role directly from database using Prisma (bypasses RLS)
-    try {
-        const profile = await prisma.profile.findUnique({
-            where: { id: user.id },
-            select: { role: true },
-        });
+    // Check JWT claims first (fastest and most secure)
+    if (user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin') {
+        return user;
+    }
 
-        if (!profile || profile.role !== 'admin') {
+    // Fallback: Check role via Supabase Auth client to respect RLS
+    try {
+        const { data: profile, error } = await supabase
+            .from('Profile')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (error || !profile || profile.role !== 'admin') {
             return null;
         }
 

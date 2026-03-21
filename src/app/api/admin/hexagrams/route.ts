@@ -2,29 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 
-// Helper to verify admin
-async function verifyAdmin() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return null;
-
-    let isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
-    if (!isAdmin) {
-        try {
-            const profile = await prisma.profile.findUnique({
-                where: { id: user.id },
-                select: { role: true }
-            });
-            isAdmin = profile?.role === 'admin';
-        } catch (e) {
-            console.error('Admin API DB fallback error:', e);
-        }
-    }
-    if (!isAdmin) return null;
-
-    return user;
-}
+import { verifyAdmin } from '@/lib/admin-auth';
 
 // GET /api/admin/hexagrams — List all hexagrams
 export async function GET() {

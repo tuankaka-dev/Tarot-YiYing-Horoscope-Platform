@@ -83,10 +83,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
         if (error) return { error: error.message };
 
-        // Create profile in our database
+        // Create profile in our database BEFORE returning
         if (data.user) {
             try {
-                await fetch('/api/profile', {
+                const profileResponse = await fetch('/api/profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -95,8 +95,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         full_name: fullName,
                     }),
                 });
+
+                if (!profileResponse.ok) {
+                    throw new Error('Failed to create profile: ' + profileResponse.status);
+                }
             } catch (e) {
-                console.error('Failed to create profile:', e);
+                console.error('Profile creation error:', e);
+                return { error: 'Tạo tài khoản thành công nhưng thiết lập hồ sơ thất bại. Vui lòng liên hệ hỗ trợ.' };
             }
         }
 
@@ -114,7 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (!user) return;
 
         try {
-            const response = await fetch(`/api/profile?userId=${user.id}`);
+            const response = await fetch('/api/profile');
             if (response.ok) {
                 const profile = await response.json();
                 set({ profile });

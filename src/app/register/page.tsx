@@ -28,8 +28,9 @@ export default function RegisterPage() {
             return;
         }
 
-        if (password.length < 6) {
-            toast.error('Mật khẩu phải có ít nhất 6 ký tự');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+        if (!passwordRegex.test(password)) {
+            toast.error('Mật khẩu quá yếu! Yêu cầu ít nhất 12 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
             return;
         }
 
@@ -89,6 +90,7 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                maxLength={72}
                                 className="bg-white border-border focus:border-mystic-gold/50"
                             />
                         </div>
@@ -101,6 +103,7 @@ export default function RegisterPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
+                                maxLength={72}
                                 className="bg-white border-border focus:border-mystic-gold/50"
                             />
                         </div>
