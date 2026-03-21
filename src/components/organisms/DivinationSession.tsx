@@ -72,7 +72,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     // Start shaking animation then auto-toss
     const startShaking = async () => {
         if (isShaking) return;
-        
+
         if (!user) {
             toast.error('Vui lòng đăng nhập để gieo quẻ.');
             window.location.href = '/register';
@@ -513,7 +513,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                     {isInterpreting && (
                                         <div className="mt-8 p-8 text-center space-y-4 rounded-xl bg-mystic-purple/5 border border-mystic-purple/20">
                                             <Loader2 className="w-8 h-8 animate-spin text-mystic-gold mx-auto" />
-                                            <p className="text-sm text-mystic-gold animate-pulse">Đang kết nối tâm linh, thỉnh giảng lời khuyên...</p>
+                                            <p className="text-sm text-mystic-gold animate-pulse">Đang kết nối tâm linh, hãy đợi 1 phút...</p>
                                         </div>
                                     )}
 

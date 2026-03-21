@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        
+
         const currentSession = await supabase.auth.getSession();
         if (!currentSession.data.session) {
             return NextResponse.json({ error: 'Session expired' }, { status: 401 });
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         // PRO users don't need credits and don't get deducted
         if (!currentProfile.is_pro) {
             const updated = await prisma.profile.updateMany({
-                where: { 
+                where: {
                     id: user.id,
                     credits: { gte: 10 }
                 },
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!apiConfig) {
-            return NextResponse.json({ error: 'No active AI configuration found. Please contact admin.' }, { status: 500 });
+            return NextResponse.json({ error: 'Hệ thống đang bảo trì, vui lòng thử lại sau.' }, { status: 500 });
         }
 
         // Decrypt the api_key before using it
@@ -140,9 +140,8 @@ export async function POST(request: NextRequest) {
                 });
             }
 
-            const message = aiError instanceof Error ? aiError.message : 'Lỗi không xác định';
             return NextResponse.json(
-                { error: `Lỗi khi gọi AI: ${message}` },
+                { error: 'Kết nối tâm linh đang bị gián đoạn. Tín chủ vui lòng đợi 1 phút và thử lại.' },
                 { status: 502 }
             );
         }
@@ -183,9 +182,8 @@ export async function POST(request: NextRequest) {
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
         });
-        const message = error instanceof Error ? error.message : 'Lỗi hệ thống';
         return NextResponse.json(
-            { error: `Lỗi máy chủ: ${message}` },
+            { error: 'Hệ thống đang bận. Tín chủ vui lòng thử lại sau giây lát.' },
             { status: 500 }
         );
     }
@@ -201,13 +199,13 @@ function buildPrompt(
     changingLines: number[],
     question: string
 ): string {
-    let prompt = `Bạn là một bậc thầy Kinh Dịch uyên thâm, am hiểu sâu sắc triết học Trung Hoa, Đạo giáo và trí tuệ cổ xưa. Bạn đưa ra những lời giải quẻ sâu sắc, uyên bác nhưng dễ hiểu và gần gũi. Hãy trả lời hoàn toàn bằng tiếng Việt.
+    let prompt = `Bạn là một bậc thầy Kinh Dịch uyên thâm, am hiểu sâu sắc triết học Trung Hoa, Đạo giáo và trí tuệ cổ xưa. Bạn đưa ra những lời giải quẻ sâu sắc, uyên bác nhưng dễ hiểu và gần gũi. Hãy trả lời hoàn toàn bằng tiếng Việt. Xưng là tôi và gọi người cầu quẻ là tín chủ thân mến
 
 Một người cầu quẻ đã tung đồng xu và nhận được kết quả gieo quẻ như sau:
 
-📋 **Câu hỏi:** "${question}"
+📋 Câu hỏi: "${question}"
 
-☰ **Quẻ Chính:** ${mainHex.name} (${mainHex.chinese_name})
+☰ Quẻ Chính: ${mainHex.name} (${mainHex.chinese_name})
 - Thượng quái: ${mainHex.trigram_above}
 - Hạ quái: ${mainHex.trigram_below}
 - Ý nghĩa cốt lõi: ${mainHex.meaning}
@@ -216,9 +214,9 @@ Một người cầu quẻ đã tung đồng xu và nhận được kết quả 
     if (changingHex && changingLines.length > 0) {
         prompt += `
 
-🔄 **Hào động:** Hào ${changingLines.join(', ')} đang biến đổi.
+🔄 Hào động: Hào ${changingLines.join(', ')} đang biến đổi.
 
-☰ **Quẻ Biến:** ${changingHex.name} (${changingHex.chinese_name})
+☰ Quẻ Biến: ${changingHex.name} (${changingHex.chinese_name})
 - Ý nghĩa cốt lõi: ${changingHex.meaning}
 - Mô tả: ${changingHex.description}`;
     }
@@ -227,11 +225,11 @@ Một người cầu quẻ đã tung đồng xu và nhận được kết quả 
 
 Hãy đưa ra lời giải quẻ Kinh Dịch toàn diện bằng tiếng Việt, bao gồm:
 
-1. **Tổng Quan Tình Hình** — Quẻ chính nói gì về câu hỏi của người cầu quẻ?
-2. **Những Lời Chỉ Dẫn Sâu Sắc** — Trí tuệ và bài học sâu xa từ quẻ này.${changingHex ? '\n3. **Sự Chuyển Hóa** — Các hào động có ý nghĩa gì? Tình hình đang chuyển biến thế nào từ quẻ chính sang quẻ biến?' : ''
+1. Tổng Quan Tình Hình — Quẻ chính nói gì về câu hỏi của người cầu quẻ?
+2. Những Lời Chỉ Dẫn Sâu Sắc — Trí tuệ và bài học sâu xa từ quẻ này.${changingHex ? '\n3. Sự Chuyển Hóa — Các hào động có ý nghĩa gì? Tình hình đang chuyển biến thế nào từ quẻ chính sang quẻ biến?' : ''
         }
-${changingHex ? '4' : '3'}. **Lời Khuyên Thực Tế** — Hướng dẫn cụ thể, thiết thực mà người cầu quẻ có thể áp dụng.
-${changingHex ? '5' : '4'}. **Lời Kết** — Một câu châm ngôn hoặc lời dạy cổ xưa bao quát tinh hoa của quẻ này.
+${changingHex ? '4' : '3'}. Lời Khuyên — Hướng dẫn cụ thể, thiết thực mà người cầu quẻ có thể áp dụng.
+${changingHex ? '5' : '4'}. Lời Kết — Một câu châm ngôn hoặc lời dạy cổ xưa bao quát tinh hoa của quẻ này.
 
 Sử dụng giọng văn ấm áp, uyên bác. Kết hợp chiều sâu triết học với sự rõ ràng thực tế. Giữ câu trả lời có cấu trúc rõ ràng nhưng tự nhiên — không quá hình thức.`;
 
@@ -354,7 +352,8 @@ async function callOpenAIAPI(
                 ...customHeaders,
             },
             body: JSON.stringify({
-                model: 'gpt-4',
+                model: config.base_url.includes('deepseek') ? 'deepseek-chat' :
+                    config.base_url.includes('groq') ? 'llama-3.1-70b-versatile' : 'gpt-4',
                 messages: [
                     { role: 'system', content: 'You are a wise master of the I Ching.' },
                     { role: 'user', content: prompt },

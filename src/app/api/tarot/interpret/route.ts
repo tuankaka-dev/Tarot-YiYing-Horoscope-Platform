@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!apiConfig) {
-            return NextResponse.json({ error: 'No active AI configuration found.' }, { status: 500 });
+            return NextResponse.json({ error: 'Hệ thống đang bảo trì, vui lòng thử lại sau.' }, { status: 500 });
         }
 
         apiConfig.api_key = decrypt(apiConfig.api_key);
@@ -71,8 +71,7 @@ export async function POST(request: NextRequest) {
                 timestamp: new Date().toISOString(),
                 error: aiError instanceof Error ? aiError.message : String(aiError),
             });
-            const message = aiError instanceof Error ? aiError.message : 'Lỗi không xác định';
-            return NextResponse.json({ error: `Lỗi khi gọi AI: ${message}` }, { status: 502 });
+            return NextResponse.json({ error: 'Kết nối tâm linh đang bị gián đoạn. Tín chủ vui lòng đợi 1 phút và thử lại.' }, { status: 502 });
         }
 
         // Save to history
@@ -99,8 +98,7 @@ export async function POST(request: NextRequest) {
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
         });
-        const message = error instanceof Error ? error.message : 'Lỗi hệ thống';
-        return NextResponse.json({ error: `Lỗi máy chủ: ${message}` }, { status: 500 });
+        return NextResponse.json({ error: 'Hệ thống đang bận. Tín chủ vui lòng thử lại sau giây lát.' }, { status: 500 });
     }
 }
 
@@ -207,7 +205,8 @@ async function callOpenAIAPI(config: any, prompt: string): Promise<string> {
                 ...customHeaders,
             },
             body: JSON.stringify({
-                model: 'gpt-4',
+                model: config.base_url.includes('deepseek') ? 'deepseek-chat' : 
+                       config.base_url.includes('groq') ? 'llama-3.1-70b-versatile' : 'gpt-4',
                 messages: [
                     { role: 'system', content: 'You are a wise Tarot reader.' },
                     { role: 'user', content: prompt },

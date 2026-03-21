@@ -22,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Settings, Plus, Pencil, Trash2, Loader2, Zap } from 'lucide-react';
+import { Settings, Plus, Pencil, Trash2, Loader2, Zap, Play } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ApiConfigItem {
@@ -52,6 +52,7 @@ export default function AdminApiConfigPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [isSaving, setIsSaving] = useState(false);
+    const [testingId, setTestingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchConfigs();
@@ -149,6 +150,30 @@ export default function AdminApiConfigPage() {
             }
         } catch {
             toast.error('Cập nhật trạng thái thất bại');
+        }
+    };
+
+    const testConnection = async (id: string) => {
+        setTestingId(id);
+        const toastId = toast.loading('Đang kiểm tra kết nối API...');
+        
+        try {
+            const res = await fetch('/api/admin/api-config/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                toast.success(data.message || 'Kết nối thành công!', { id: toastId });
+            } else {
+                toast.error(data.message || data.error || 'Lỗi kết nối', { id: toastId });
+            }
+        } catch (err) {
+            toast.error('Lỗi khi gọi API kiểm tra', { id: toastId });
+        } finally {
+            setTestingId(null);
         }
     };
 
@@ -351,6 +376,16 @@ export default function AdminApiConfigPage() {
                                             checked={config.status === 'active'}
                                             onCheckedChange={() => toggleStatus(config)}
                                         />
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => testConnection(config.id)} 
+                                            className="text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 gap-1 ml-2"
+                                            disabled={testingId === config.id}
+                                        >
+                                            {testingId === config.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                                            Thử
+                                        </Button>
                                         <Button variant="ghost" size="sm" onClick={() => openEdit(config)} className="gap-1">
                                             <Pencil className="w-3 h-3" />
                                             Sửa
