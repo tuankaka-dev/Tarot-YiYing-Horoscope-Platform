@@ -28,8 +28,10 @@ export async function POST(request: NextRequest) {
         const price = isPro ? PRO_MONTHLY_PRICE : PREMIUM_WEEKLY_PRICE;
         const description = isPro ? 'Goi PRO 1 thang - GieoQue' : 'Premium 7 ngay - GieoQue';
 
-        // Generate a unique order code (timestamp-based + random)
-        const orderCode = Number(`${Date.now()}`.slice(-8) + Math.floor(Math.random() * 100).toString().padStart(2, '0'));
+        // Generate a robust unique numeric order code (PayOS requires it to be < Number.MAX_SAFE_INTEGER)
+        const timestampPart = Date.now().toString().slice(-6);
+        const randomPart = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const orderCode = Number(timestampPart + randomPart);
 
         const existing = await prisma.transaction.findUnique({
             where: { payos_order_id: orderCode.toString() }

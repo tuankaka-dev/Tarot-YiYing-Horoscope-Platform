@@ -194,23 +194,37 @@ async function callOpenAIAPI(config: any, prompt: string): Promise<string> {
     const url = `${config.base_url}/chat/completions`;
     const customHeaders = (config.headers && typeof config.headers === 'object') ? config.headers as Record<string, string> : {};
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [
-                { role: 'system', content: 'You are a wise Tarot reader.' },
-                { role: 'user', content: prompt },
-            ],
-            temperature: 0.8,
-            max_tokens: 2048,
-        }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4',
+                messages: [
+                    { role: 'system', content: 'You are a wise Tarot reader.' },
+                    { role: 'user', content: prompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 2048,
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+            throw new Error('API request timeout sau 25 giây');
+        }
+        throw fetchErr;
+    }
 
     if (!response.ok) {
         throw new Error(`OpenAI API error: ${response.status}`);
@@ -223,15 +237,29 @@ async function callOpenAIAPI(config: any, prompt: string): Promise<string> {
 async function callCustomAPI(config: any, prompt: string): Promise<string> {
     const customHeaders = (config.headers && typeof config.headers === 'object') ? config.headers as Record<string, string> : {};
 
-    const response = await fetch(config.base_url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({ prompt, max_tokens: 2048 }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response;
+    try {
+        response = await fetch(config.base_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({ prompt, max_tokens: 2048 }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+            throw new Error('API request timeout sau 25 giây');
+        }
+        throw fetchErr;
+    }
 
     if (!response.ok) {
         throw new Error(`Custom API error: ${response.status}`);

@@ -26,6 +26,11 @@ export async function POST(request: NextRequest) {
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        
+        const currentSession = await supabase.auth.getSession();
+        if (!currentSession.data.session) {
+            return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+        }
 
         // Pre-check and deduct 10 xu for deep AI interpretation
         const currentProfile = await prisma.profile.findUnique({
@@ -64,10 +69,11 @@ export async function POST(request: NextRequest) {
         }
 
         if (changingHexagramId !== undefined && changingHexagramId !== null) {
-            changingHexagramId = parseInt(changingHexagramId);
-            if (isNaN(changingHexagramId) || changingHexagramId < 1 || changingHexagramId > 64) {
+            const parsed = parseInt(changingHexagramId);
+            if (isNaN(parsed) || parsed < 1 || parsed > 64) {
                 return NextResponse.json({ error: 'Invalid changing hexagram ID' }, { status: 400 });
             }
+            changingHexagramId = parsed;
         }
 
         const MAX_QUESTION_LENGTH = 500;
@@ -335,23 +341,35 @@ async function callOpenAIAPI(
         ? config.headers as Record<string, string>
         : {};
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({
-            model: 'gpt-4',
-            messages: [
-                { role: 'system', content: 'You are a wise master of the I Ching.' },
-                { role: 'user', content: prompt },
-            ],
-            temperature: 0.8,
-            max_tokens: 2048,
-        }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4',
+                messages: [
+                    { role: 'system', content: 'You are a wise master of the I Ching.' },
+                    { role: 'user', content: prompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 2048,
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') throw new Error('API request timeout sau 25 giây');
+        throw fetchErr;
+    }
 
     if (!response.ok) {
         const err = await response.text();
@@ -371,18 +389,30 @@ async function callCustomAPI(
         ? config.headers as Record<string, string>
         : {};
 
-    const response = await fetch(config.base_url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({
-            prompt,
-            max_tokens: 2048,
-        }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response;
+    try {
+        response = await fetch(config.base_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({
+                prompt,
+                max_tokens: 2048,
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') throw new Error('API request timeout sau 25 giây');
+        throw fetchErr;
+    }
 
     if (!response.ok) {
         throw new Error(`Custom API error: ${response.status}`);

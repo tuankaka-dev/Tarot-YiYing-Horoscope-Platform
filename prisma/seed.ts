@@ -4,7 +4,8 @@ import crypto from 'crypto';
 // Manual encryption since we can't easily import from lib with ts-node
 function encryptSeed(text: string): string {
     const algorithm = 'aes-256-cbc';
-    const secretKey = process.env.ENCRYPTION_KEY || 'default-secret-key-must-be-32ch';
+    const secretKey = process.env.ENCRYPTION_KEY;
+    if (!secretKey) throw new Error('ENCRYPTION_KEY environment variable is required for seeding');
     const key = crypto.scryptSync(secretKey, 'salt', 32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(algorithm, key, iv);

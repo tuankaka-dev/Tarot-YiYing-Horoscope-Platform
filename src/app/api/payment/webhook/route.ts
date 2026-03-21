@@ -14,6 +14,20 @@ export async function POST(request: NextRequest) {
             console.error('PayOS webhook verification failed');
             return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
         }
+        
+        // Anti-Replay: Check webhook age if timestamp is provided
+        const extractTimestamp = body.timestamp || body.data?.timestamp;
+        if (extractTimestamp) {
+            const webhookTimestamp = new Date(extractTimestamp);
+            const now = new Date();
+            const timeDiff = Math.abs(now.getTime() - webhookTimestamp.getTime());
+            
+            // 5 minute expiration window
+            if (timeDiff > 5 * 60 * 1000) {
+                console.error('Webhook expired / Replay attempt blocked');
+                return NextResponse.json({ error: 'Webhook expired' }, { status: 400 });
+            }
+        }
 
         const orderCode = webhookData.orderCode.toString();
 
