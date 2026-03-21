@@ -43,6 +43,7 @@ export default function RegisterPage() {
             setIsLoading(false);
         } else {
             toast.success('Tạo tài khoản thành công!');
+            router.refresh();
             router.push('/dashboard');
         }
     };

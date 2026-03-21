@@ -22,6 +22,7 @@ export function Navbar() {
 
     const handleSignOut = async () => {
         await signOut();
+        router.refresh();
         router.push('/');
     };
 

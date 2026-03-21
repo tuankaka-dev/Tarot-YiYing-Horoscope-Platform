@@ -19,6 +19,7 @@ export function AutoLogout() {
         const handleTimeout = async () => {
             await signOut();
             toast.error('Phiên đăng nhập đã hết hạn do không hoạt động. Vui lòng đăng nhập lại.');
+            router.refresh();
             router.push('/login');
         };
 

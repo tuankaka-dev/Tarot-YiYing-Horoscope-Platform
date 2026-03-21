@@ -29,6 +29,7 @@ export default function LoginPage() {
             setIsLoading(false);
         } else {
             toast.success('Chào mừng bạn trở lại!');
+            router.refresh();
             router.push('/dashboard');
         }
     };
