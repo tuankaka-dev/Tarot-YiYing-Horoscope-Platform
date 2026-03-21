@@ -85,10 +85,15 @@ async function main() {
 
     // Seed hexagrams
     for (const hex of hexagrams) {
+        const hexData = {
+            ...hex,
+            image_url: `https://pfdhweyxmvbytokajslj.supabase.co/storage/v1/object/public/64_QUE/${hex.id}.png`
+        };
+        
         await prisma.hexagram.upsert({
             where: { id: hex.id },
-            update: hex,
-            create: hex,
+            update: hexData,
+            create: hexData,
         });
     }
     console.log(`✅ Đã seed ${hexagrams.length} quẻ dịch`);
