@@ -72,11 +72,22 @@ export async function checkAndResetCredits(userId: string) {
     }
 
     if (needsUpdate) {
-        const updated = await prisma.profile.update({
-            where: { id: userId },
+        const updated = await prisma.profile.updateMany({
+            where: { 
+                id: userId,
+                // Only update if no other request has updated the last_reset_date
+                last_reset_date: profile.last_reset_date,
+            },
             data: updateData,
         });
-        return updated;
+        
+        if (updated.count === 0) {
+            // Race condition occurred, another process already reset it
+            return await prisma.profile.findUnique({ where: { id: userId } });
+        }
+        
+        // Return updated profile
+        return { ...profile, ...updateData };
     }
 
     return profile;

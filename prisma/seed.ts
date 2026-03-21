@@ -1,6 +1,17 @@
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+// Manual encryption since we can't easily import from lib with ts-node
+function encryptSeed(text: string): string {
+    const algorithm = 'aes-256-cbc';
+    const secretKey = process.env.ENCRYPTION_KEY || 'default-secret-key-must-be-32ch';
+    const key = crypto.scryptSync(secretKey, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return `${iv.toString('hex')}:${encrypted}`;
+}const prisma = new PrismaClient();
 
 const hexagrams = [
     { id: 1, name: 'Càn vi Thiên', chinese_name: '乾 (Qián)', meaning: 'Sức mạnh sáng tạo, trời, chủ động', trigram_above: 'Trời', trigram_below: 'Trời', description: 'Quẻ Càn tượng trưng cho sức mạnh thuần dương. Biểu thị sự mạnh mẽ, kiên trì và năng lượng sáng tạo. Trời trên trời dưới, thuần dương tối thượng.' },
@@ -93,7 +104,7 @@ async function main() {
                 name: 'Gemini 2.0 Flash (Mặc định)',
                 provider: 'gemini',
                 base_url: 'https://generativelanguage.googleapis.com/v1beta',
-                api_key: process.env.GEMINI_API_KEY || 'your-gemini-api-key',
+                api_key: encryptSeed(process.env.GEMINI_API_KEY || 'your-gemini-api-key'),
                 status: 'active',
             },
         });

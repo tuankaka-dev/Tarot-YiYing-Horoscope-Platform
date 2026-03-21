@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const limitParam = request.nextUrl.searchParams.get('limit');
+        const limit = limitParam ? parseInt(limitParam) : 50;
+
         const histories = await prisma.userHistory.findMany({
             where: { user_id: user.id },
             include: {
@@ -19,6 +22,7 @@ export async function GET(request: NextRequest) {
                 changing_hexagram: true,
             },
             orderBy: { created_at: 'desc' },
+            take: limit,
         });
 
         return NextResponse.json(histories);

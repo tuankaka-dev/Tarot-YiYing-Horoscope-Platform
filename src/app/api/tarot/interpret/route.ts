@@ -14,10 +14,22 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { question, spreadType, cardIds } = body;
+        let { question, spreadType, cardIds } = body;
 
-        if (!question || !spreadType || !cardIds || cardIds.length === 0) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        const MAX_QUESTION_LENGTH = 500;
+        if (typeof question !== 'string' || question.trim().length === 0) {
+            return NextResponse.json({ error: 'Invalid question' }, { status: 400 });
+        }
+        if (question.length > MAX_QUESTION_LENGTH) {
+            return NextResponse.json(
+                { error: `Question must be less than ${MAX_QUESTION_LENGTH} characters` },
+                { status: 400 }
+            );
+        }
+        question = question.trim();
+
+        if (!spreadType || !Array.isArray(cardIds) || cardIds.length === 0) {
+            return NextResponse.json({ error: 'Missing req fields or invalid layout' }, { status: 400 });
         }
 
         // Fetch card data
@@ -54,7 +66,11 @@ export async function POST(request: NextRequest) {
                 aiResponseText = await callCustomAPI(apiConfig, prompt);
             }
         } catch (aiError) {
-            console.error('AI API call failed:', aiError);
+            console.error('Tarot API AI call error for user:', {
+                userId: user.id,
+                timestamp: new Date().toISOString(),
+                error: aiError instanceof Error ? aiError.message : String(aiError),
+            });
             const message = aiError instanceof Error ? aiError.message : 'Lỗi không xác định';
             return NextResponse.json({ error: `Lỗi khi gọi AI: ${message}` }, { status: 502 });
         }
@@ -78,7 +94,11 @@ export async function POST(request: NextRequest) {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });
     } catch (error) {
-        console.error('Tarot interpret API error:', error);
+        console.error('Tarot API critical error:', {
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
         const message = error instanceof Error ? error.message : 'Lỗi hệ thống';
         return NextResponse.json({ error: `Lỗi máy chủ: ${message}` }, { status: 500 });
     }
@@ -131,17 +151,39 @@ async function callGeminiAPI(config: any, prompt: string): Promise<string> {
     const url = `${config.base_url}/models/gemini-2.0-flash:generateContent?key=${config.api_key}`;
     const customHeaders = (config.headers && typeof config.headers === 'object') ? config.headers as Record<string, string> : {};
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...customHeaders },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
-        }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+
+    let response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...customHeaders },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.8, maxOutputTokens: 2048 },
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+    } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+            throw new Error('API request timeout sau 25 giây');
+        }
+        throw fetchErr;
+    }
 
     if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+        const errBody = await response.text();
+        let detail = '';
+        try {
+            const errJson = JSON.parse(errBody);
+            detail = errJson?.error?.message || '';
+        } catch (parseError) {
+            detail = errBody.substring(0, 200);
+        }
+        throw new Error(`Gemini API error (${response.status}): ${detail}`);
     }
 
     const data = await response.json();

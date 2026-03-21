@@ -78,7 +78,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         }
 
         // Check if user has enough credits (skip for PRO users)
-        if (!(profile as any)?.is_pro && profile && profile.credits < 10) {
+        if (!profile?.is_pro && profile && profile.credits < 10) {
             toast.error('Không đủ xu để gieo quẻ. Vui lòng nâng cấp gói đăng ký.');
             setTimeout(() => {
                 window.location.href = '/#pricing';
@@ -169,7 +169,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         if (!mainHexagram || !divResult) return;
 
         // Check credits before proceeding
-        if (!(profile as any)?.is_pro && profile && profile.credits < 10) {
+        if (!profile?.is_pro && profile && profile.credits < 10) {
             toast.error('Không đủ xu để giải quẻ chuyên sâu. Vui lòng nâng cấp gói đăng ký.');
             setTimeout(() => {
                 window.location.href = '/#pricing';
@@ -178,7 +178,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
         }
 
         // Optimistic UI update for credits (deduct 10 xu immediately)
-        if (profile && (profile as any).is_pro) {
+        if (profile && profile.is_pro) {
             // PRO users have unlimited usage - skip deduction
         } else if (profile && profile.credits >= 10) {
             useAuthStore.setState({ profile: { ...profile, credits: profile.credits - 10 } });

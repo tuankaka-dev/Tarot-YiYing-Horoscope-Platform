@@ -40,29 +40,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
         }
 
-        if (profile.credits < amount) {
+        const updated = await prisma.profile.updateMany({
+            where: { 
+                id: user.id,
+                credits: { gte: amount }
+            },
+            data: {
+                credits: { decrement: amount }
+            }
+        });
+
+        if (updated.count === 0) {
             return NextResponse.json({ 
                 error: 'Insufficient credits', 
                 current_credits: profile.credits 
             }, { status: 402 });
         }
 
-        // Deduct credits
-        const updatedProfile = await prisma.profile.update({
-            where: { id: user.id },
-            data: {
-                credits: {
-                    decrement: amount
-                }
-            }
-        });
-
-        // Optionally, we could log the transaction into a generic transaction history table here if it existed.
-        // For now, deducting credits is sufficient.
-
+        // Return calculated credits for immediate UI feedback
         return NextResponse.json({ 
             success: true, 
-            credits: updatedProfile.credits 
+            credits: profile.credits - amount 
         });
     } catch (error) {
         console.error('Credit deduction error:', error);

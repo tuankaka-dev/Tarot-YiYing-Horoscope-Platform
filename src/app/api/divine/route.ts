@@ -31,33 +31,56 @@ export async function POST(request: NextRequest) {
         const currentProfile = await prisma.profile.findUnique({
             where: { id: user.id },
             select: { credits: true, is_pro: true }
-        } as any);
+        });
 
         if (!currentProfile) {
             return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
         }
 
         // PRO users don't need credits and don't get deducted
-        if (!(currentProfile as any).is_pro) {
-            if (currentProfile.credits < 10) {
+        if (!currentProfile.is_pro) {
+            const updated = await prisma.profile.updateMany({
+                where: { 
+                    id: user.id,
+                    credits: { gte: 10 }
+                },
+                data: { credits: { decrement: 10 } }
+            });
+
+            if (updated.count === 0) {
                 return NextResponse.json(
                     { error: 'Không đủ xu để giải quẻ chuyên sâu. Vui lòng mua thêm xu hoặc nâng cấp Gói' },
                     { status: 402 }
                 );
             }
-
-            await prisma.profile.update({
-                where: { id: user.id },
-                data: { credits: { decrement: 10 } }
-            });
         }
 
         const body = await request.json();
-        const { mainHexagramId, changingHexagramId, changingLines, question, historyId } = body;
+        let { mainHexagramId, changingHexagramId, changingLines, question, historyId } = body;
 
-        if (!mainHexagramId || !question) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        mainHexagramId = parseInt(mainHexagramId);
+        if (isNaN(mainHexagramId) || mainHexagramId < 1 || mainHexagramId > 64) {
+            return NextResponse.json({ error: 'Invalid hexagram ID' }, { status: 400 });
         }
+
+        if (changingHexagramId !== undefined && changingHexagramId !== null) {
+            changingHexagramId = parseInt(changingHexagramId);
+            if (isNaN(changingHexagramId) || changingHexagramId < 1 || changingHexagramId > 64) {
+                return NextResponse.json({ error: 'Invalid changing hexagram ID' }, { status: 400 });
+            }
+        }
+
+        const MAX_QUESTION_LENGTH = 500;
+        if (typeof question !== 'string' || question.trim().length === 0) {
+            return NextResponse.json({ error: 'Invalid question' }, { status: 400 });
+        }
+        if (question.length > MAX_QUESTION_LENGTH) {
+            return NextResponse.json(
+                { error: `Question must be less than ${MAX_QUESTION_LENGTH} characters` },
+                { status: 400 }
+            );
+        }
+        question = question.trim();
 
         // Fetch hexagram data
         const mainHexagram = await prisma.hexagram.findUnique({ where: { id: mainHexagramId } });
@@ -97,10 +120,14 @@ export async function POST(request: NextRequest) {
                 aiResponseText = await callCustomAPI(apiConfig, prompt);
             }
         } catch (aiError) {
-            console.error('AI API call failed:', aiError);
+            console.error('Divine API AI call error for user:', {
+                userId: user.id,
+                timestamp: new Date().toISOString(),
+                error: aiError instanceof Error ? aiError.message : String(aiError),
+            });
 
             // Refund 10 xu ONLY if user is not PRO
-            if (!(currentProfile as any).is_pro) {
+            if (!currentProfile.is_pro) {
                 await prisma.profile.update({
                     where: { id: user.id },
                     data: { credits: { increment: 10 } }
@@ -145,7 +172,11 @@ export async function POST(request: NextRequest) {
             },
         });
     } catch (error) {
-        console.error('Divine API error:', error);
+        console.error('Divine API critical error:', {
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
         const message = error instanceof Error ? error.message : 'Lỗi hệ thống';
         return NextResponse.json(
             { error: `Lỗi máy chủ: ${message}` },
@@ -232,14 +263,28 @@ async function callGeminiAPI(
     const RETRY_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s — Gemini free tier needs longer waits
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...customHeaders,
-            },
-            body,
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+
+        let response;
+        try {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...customHeaders,
+                },
+                body,
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+                throw new Error('API request timeout sau 25 giây');
+            }
+            throw fetchErr;
+        }
 
         if (response.ok) {
             const data = await response.json();
@@ -269,7 +314,10 @@ async function callGeminiAPI(
             try {
                 const errJson = JSON.parse(errBody);
                 detail = errJson?.error?.message || '';
-            } catch { /* ignore */ }
+            } catch (parseError) {
+                console.warn('Failed to parse error response:', parseError);
+                detail = errBody.substring(0, 200);
+            }
             throw new Error(`Lỗi Gemini API (${response.status}): ${detail || 'Lỗi không xác định'}`);
         }
     }

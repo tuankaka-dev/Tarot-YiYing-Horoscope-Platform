@@ -1,7 +1,10 @@
 import crypto from 'crypto';
 
 const algorithm = 'aes-256-cbc';
-const secretKey = process.env.ENCRYPTION_KEY || 'default-secret-key-must-be-32ch';
+const secretKey = process.env.ENCRYPTION_KEY;
+if (!secretKey) {
+    throw new Error('ENCRYPTION_KEY environment variable is required');
+}
 
 // Ensure the key is 32 bytes
 const key = crypto.scryptSync(secretKey, 'salt', 32);
@@ -21,8 +24,7 @@ export function decrypt(encryptedText: string): string {
         const [ivHex, encryptedHex] = encryptedText.split(':');
         
         if (!ivHex || !encryptedHex) {
-            // Return original text if not encrypted properly (for backward compatibility)
-            return encryptedText;
+            throw new Error('Invalid encrypted format. Data may be corrupted.');
         }
         
         const iv = Buffer.from(ivHex, 'hex');

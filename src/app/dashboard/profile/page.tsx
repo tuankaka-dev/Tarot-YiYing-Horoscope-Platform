@@ -82,7 +82,7 @@ export default function ProfilePage() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <CardTitle>{profile?.full_name || 'Người dùng'}</CardTitle>
-                                    {(profile as any)?.is_pro ? (
+                                    {profile?.is_pro ? (
                                         <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
                                             <Crown className="w-3 h-3" /> Gói Tháng (PRO)
                                         </Badge>

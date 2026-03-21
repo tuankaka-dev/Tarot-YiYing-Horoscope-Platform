@@ -31,6 +31,14 @@ export async function POST(request: NextRequest) {
         // Generate a unique order code (timestamp-based + random)
         const orderCode = Number(`${Date.now()}`.slice(-8) + Math.floor(Math.random() * 100).toString().padStart(2, '0'));
 
+        const existing = await prisma.transaction.findUnique({
+            where: { payos_order_id: orderCode.toString() }
+        });
+
+        if (existing) {
+            return NextResponse.json({ error: 'Order code collision' }, { status: 409 });
+        }
+
         // Create pending transaction
         const transaction = await prisma.transaction.create({
             data: {
