@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
-    "db:setup": "prisma db push && npx tsx prisma/seed.ts"
+    "db:setup": "prisma db push && npx tsx prisma/seed.ts",
+    "history:cleanup": "node scripts/cleanup-empty-history.js"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

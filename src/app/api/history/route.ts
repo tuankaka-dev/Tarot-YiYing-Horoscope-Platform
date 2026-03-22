@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { cleanupStaleEmptyHistories } from '@/lib/history-cleanup';
 
 // GET /api/history — Get user's divination history
 export async function GET(request: NextRequest) {
     try {
+        cleanupStaleEmptyHistories().catch((error) => {
+            console.error('Auto cleanup stale history failed:', error);
+        });
+
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 

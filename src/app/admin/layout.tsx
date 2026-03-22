@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Users, Settings, LayoutDashboard, BookOpen, CreditCard, Bell } from 'lucide-react';
+import { Shield, Users, Settings, LayoutDashboard, BookOpen, CreditCard, Bell, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
     { href: '/admin/users', label: 'Quản Lý Người Dùng', icon: Users },
     { href: '/admin/hexagrams', label: 'Quản Lý Quẻ Dịch', icon: BookOpen },
     { href: '/admin/transactions', label: 'Giao Dịch', icon: CreditCard },
+    { href: '/admin/history', label: 'Lịch Sử Gieo Quẻ', icon: History },
     { href: '/admin/notifications', label: 'Thông Báo', icon: Bell },
     { href: '/admin/api-config', label: 'Cấu Hình API', icon: Settings },
 ];

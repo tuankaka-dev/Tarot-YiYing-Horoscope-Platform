@@ -5,8 +5,13 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
+const { createClient } = require('@supabase/supabase-js');
 
 const prisma = new PrismaClient();
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 async function setAdmin(email) {
     if (!email) {
@@ -37,6 +42,20 @@ async function setAdmin(email) {
             where: { email },
             data: { role: 'admin' }
         });
+
+        try {
+            const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(updatedProfile.id, {
+                user_metadata: {
+                    role: 'admin'
+                }
+            });
+
+            if (metadataError) {
+                console.warn('⚠️ Không đồng bộ được metadata role lên Supabase Auth:', metadataError.message);
+            }
+        } catch (syncErr) {
+            console.warn('⚠️ Lỗi đồng bộ metadata role:', syncErr.message);
+        }
 
         console.log('✅ Cập nhật thành công!');
         console.log(`📧 Email: ${updatedProfile.email}`);

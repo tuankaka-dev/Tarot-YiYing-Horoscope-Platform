@@ -1,15 +1,33 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+function normalizeHost(host: string) {
+    return host.toLowerCase().split(':')[0];
+}
+
+function getRequestProtocol(request: NextRequest) {
+    const forwardedProto = request.headers.get('x-forwarded-proto');
+    if (forwardedProto) {
+        return forwardedProto.split(',')[0].trim();
+    }
+    return request.nextUrl.protocol.replace(':', '');
+}
+
+function getRequestHost(request: NextRequest) {
+    return request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host;
+}
+
 export async function middleware(request: NextRequest) {
     const { method } = request;
     const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
-    const isWebhook = request.nextUrl.pathname.startsWith('/api/payment/webhook');
+    const isWebhook =
+        request.nextUrl.pathname.startsWith('/api/payment/webhook') ||
+        request.nextUrl.pathname.startsWith('/api/payos/webhook');
 
     // CSRF Protection: Verify Origin matches Host for state-changing requests
     if (isMutation && !isWebhook) {
         const origin = request.headers.get('origin') || request.headers.get('referer');
-        const host = request.headers.get('host');
+        const host = getRequestHost(request);
 
         if (!origin || !host) {
             return NextResponse.json({ error: 'Missing Origin or Host header' }, { status: 403 });
@@ -17,7 +35,7 @@ export async function middleware(request: NextRequest) {
 
         try {
             const originUrl = new URL(origin);
-            if (originUrl.host !== host) {
+            if (normalizeHost(originUrl.host) !== normalizeHost(host)) {
                 return NextResponse.json({ error: 'CSRF token mismatch or Invalid Origin' }, { status: 403 });
             }
         } catch {
@@ -38,9 +56,9 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) =>
-                        request.cookies.set(name, value)
-                    );
+                    cookiesToSet.forEach(({ name, value }) => {
+                        request.cookies.set(name, value);
+                    });
                     supabaseResponse = NextResponse.next({
                         request,
                     });
@@ -93,9 +111,13 @@ export async function middleware(request: NextRequest) {
         // 2. Nếu JWT không có quyền admin, gọi qua API trung gian chạy bằng Prisma (vì Prisma không hỗ trợ chạy trực tiếp trên Edge Middleware và tài khoản DB hiện tại đang chặn truy cập thẳng từ PostgREST)
         if (!isAdmin) {
             try {
-                const res = await fetch(`${request.nextUrl.origin}/api/check-admin-role`, {
+                const protocol = getRequestProtocol(request);
+                const host = getRequestHost(request);
+                const res = await fetch(`${protocol}://${host}/api/check-admin-role`, {
                     headers: {
                         cookie: request.headers.get('cookie') || '',
+                        'x-forwarded-proto': protocol,
+                        'x-forwarded-host': host,
                     },
                 });
                 

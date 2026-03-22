@@ -28,9 +28,8 @@ export default function RegisterPage() {
             return;
         }
 
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
-        if (!passwordRegex.test(password)) {
-            toast.error('Mật khẩu quá yếu! Yêu cầu ít nhất 12 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+        if (password.length < 9) {
+            toast.error('Mật khẩu phải có ít nhất 9 ký tự.');
             return;
         }
 
@@ -63,7 +62,7 @@ export default function RegisterPage() {
                             <Input
                                 id="fullName"
                                 type="text"
-                                placeholder="Nhập họ tên của bạn"
+                                placeholder=""
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 required
@@ -75,7 +74,7 @@ export default function RegisterPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="email@example.com"
+                                placeholder=""
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -87,7 +86,7 @@ export default function RegisterPage() {
                             <Input
                                 id="password"
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder=""
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
@@ -100,7 +99,7 @@ export default function RegisterPage() {
                             <Input
                                 id="confirmPassword"
                                 type="password"
-                                placeholder="••••••••"
+                                placeholder=""
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required

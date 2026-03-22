@@ -77,17 +77,26 @@ export async function POST(request: NextRequest) {
             changingHexagramId = parsed;
         }
 
+        const MIN_QUESTION_LENGTH = 10;
         const MAX_QUESTION_LENGTH = 500;
         if (typeof question !== 'string' || question.trim().length === 0) {
             return NextResponse.json({ error: 'Invalid question' }, { status: 400 });
         }
+        question = question.trim();
+
+        if (question.length < MIN_QUESTION_LENGTH) {
+            return NextResponse.json(
+                { error: `Question must be at least ${MIN_QUESTION_LENGTH} characters` },
+                { status: 400 }
+            );
+        }
+
         if (question.length > MAX_QUESTION_LENGTH) {
             return NextResponse.json(
                 { error: `Question must be less than ${MAX_QUESTION_LENGTH} characters` },
                 { status: 400 }
             );
         }
-        question = question.trim();
 
         // Fetch hexagram data
         const mainHexagram = await prisma.hexagram.findUnique({ where: { id: mainHexagramId } });

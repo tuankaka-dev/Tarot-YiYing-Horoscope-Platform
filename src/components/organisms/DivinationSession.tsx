@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,6 +45,26 @@ interface DivinationSessionProps {
 
 type Phase = 'question' | 'shaking' | 'tossing' | 'result' | 'interpreting' | 'complete';
 
+function ImageWatermarkOverlay() {
+    const rows = Array.from({ length: 3 }, (_, i) => i);
+
+    return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-black/5 to-transparent" />
+            <div className="absolute left-1/2 top-1/2 w-[140%] -translate-x-1/2 -translate-y-1/2 -rotate-[24deg] space-y-5">
+                {rows.map((row) => (
+                    <div
+                        key={row}
+                        className="whitespace-nowrap text-[10px] md:text-xs font-semibold tracking-[0.34em] text-white/24 text-center"
+                    >
+                        GIEOQUE.APP GIEOQUE.APP GIEOQUE.APP
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const { user, profile, fetchProfile, isLoading: authLoading } = useAuthStore();
 
@@ -57,6 +76,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     const [isShaking, setIsShaking] = useState(false);
     const [isInterpreting, setIsInterpreting] = useState(false);
     const [historyId, setHistoryId] = useState<string | null>(null);
+    const trimmedQuestion = question.trim();
 
     // Redirect if unauthenticated after loading finishes
     useEffect(() => {
@@ -81,6 +101,11 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
     // Start shaking animation then auto-toss
     const startShaking = async () => {
         if (isShaking) return;
+
+        if (trimmedQuestion.length < 10) {
+            toast.error('Câu hỏi phải có ít nhất 10 ký tự.');
+            return;
+        }
 
         if (!user) {
             toast.error('Vui lòng đăng nhập để gieo quẻ.');
@@ -152,7 +177,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            question,
+                            question: trimmedQuestion,
                             mainHexagramId: finalDivResult.mainHexagramNumber,
                             changingHexagramId: finalDivResult.changingHexagramNumber || null,
                             changingLines: finalDivResult.changingLinePositions
@@ -177,7 +202,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             setTimeout(doToss, 600);
         };
         doToss();
-    }, [question]);
+    }, [trimmedQuestion]);
 
     // Request AI interpretation
     const requestInterpretation = async () => {
@@ -207,7 +232,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: user?.id,
-                    question,
+                    question: trimmedQuestion,
                     mainHexagramId: mainHexagram.id,
                     changingHexagramId: changingHexagram?.id || null,
                     changingLines: divResult.changingLinePositions,
@@ -313,10 +338,13 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         rows={4}
                                         className="bg-background/50 border-mystic-purple/20 focus:border-mystic-gold/50 resize-none"
                                     />
+                                    <p className="text-xs text-muted-foreground">
+                                        Câu hỏi cần có ít nhất 10 ký tự.
+                                    </p>
 
                                     <Button
                                         onClick={startShaking}
-                                        disabled={!question.trim() || isShaking}
+                                        disabled={trimmedQuestion.length < 10 || isShaking}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
                                         {isShaking ? 'Đang chuẩn bị...' : (
@@ -477,12 +505,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                     <p className="text-xs text-muted-foreground mt-1">{mainHexagram.description}</p>
                                                     {mainHexagram.image_url && (
                                                         <div className="mt-4 flex justify-center">
-                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                            <img
-                                                                src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
-                                                                alt={mainHexagram.name}
-                                                                className="rounded-md w-full max-w-[450px] h-auto object-contain border border-mystic-gold/20 shadow-sm"
-                                                            />
+                                                            <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img
+                                                                    src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
+                                                                    alt={mainHexagram.name}
+                                                                    className="w-full h-auto object-contain"
+                                                                />
+                                                                <ImageWatermarkOverlay />
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -509,12 +540,15 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                                         <p className="text-xs text-muted-foreground mt-1">{changingHexagram.description}</p>
                                                         {changingHexagram.image_url && (
                                                             <div className="mt-4 flex justify-center">
-                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img
-                                                                    src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
-                                                                    alt={changingHexagram.name}
-                                                                    className="rounded-md w-full max-w-[450px] h-auto object-contain border border-mystic-gold/20 shadow-sm"
-                                                                />
+                                                                <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img
+                                                                        src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
+                                                                        alt={changingHexagram.name}
+                                                                        className="w-full h-auto object-contain"
+                                                                    />
+                                                                    <ImageWatermarkOverlay />
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>
