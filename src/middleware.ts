@@ -18,11 +18,18 @@ function getRequestHost(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
+    const pathname = request.nextUrl.pathname;
     const { method } = request;
     const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
     const isWebhook =
-        request.nextUrl.pathname.startsWith('/api/payment/webhook') ||
-        request.nextUrl.pathname.startsWith('/api/payos/webhook');
+        pathname.startsWith('/api/payment/webhook') ||
+        pathname.startsWith('/api/payos/webhook');
+    const isAuthCallback = pathname.startsWith('/auth/callback');
+
+    // Keep webhook and OAuth callback untouched by middleware auth/redirect logic.
+    if (isWebhook || isAuthCallback) {
+        return NextResponse.next({ request });
+    }
 
     // CSRF Protection: Verify Origin matches Host for state-changing requests
     if (isMutation && !isWebhook) {
@@ -74,8 +81,6 @@ export async function middleware(request: NextRequest) {
     const {
         data: { user },
     } = await supabase.auth.getUser();
-
-    const pathname = request.nextUrl.pathname;
 
     // Protect /dashboard routes
     if (pathname.startsWith('/dashboard') && !user) {

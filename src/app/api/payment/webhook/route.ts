@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getPayOS } from '@/lib/payos';
 
+export async function GET() {
+    return NextResponse.json({ ok: true, endpoint: 'payos-webhook' });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
