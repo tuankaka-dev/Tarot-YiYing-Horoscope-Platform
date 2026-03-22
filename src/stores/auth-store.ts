@@ -64,13 +64,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signInWithGoogle: async () => {
         const supabase = createClient();
-        const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL;
-        const redirectBase =
-            configuredBaseUrl &&
-            /^https?:\/\//i.test(configuredBaseUrl) &&
-            !(configuredBaseUrl.includes('localhost') && window.location.hostname !== 'localhost')
-                ? configuredBaseUrl.replace(/\/$/, '')
-                : window.location.origin;
+        // Keep OAuth callback on the same origin that started the flow so PKCE/state cookies match.
+        const redirectBase = window.location.origin.replace(/\/$/, '');
 
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
