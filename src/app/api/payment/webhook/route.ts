@@ -6,6 +6,10 @@ export async function GET() {
     return NextResponse.json({ ok: true, endpoint: 'payos-webhook' });
 }
 
+export async function HEAD() {
+    return new NextResponse(null, { status: 200 });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -41,8 +45,9 @@ export async function POST(request: NextRequest) {
         });
 
         if (!transaction) {
-            console.error('Transaction not found for orderCode:', orderCode);
-            return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+            console.warn('Transaction not found for orderCode:', orderCode);
+            // Always ACK unknown order codes so provider URL verification does not fail.
+            return NextResponse.json({ success: true, ignored: 'transaction_not_found' });
         }
 
         // Already processed

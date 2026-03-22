@@ -1,1 +1,1 @@
-export { GET, POST } from '@/app/api/payment/webhook/route';
+export { GET, HEAD, POST } from '@/app/api/payment/webhook/route';
