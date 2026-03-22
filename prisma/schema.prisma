@@ -23,9 +23,40 @@ model Profile {
   updated_at      DateTime  @updatedAt
 
   histories    UserHistory[]
+  tarot_readings TarotReading[]
   transactions Transaction[]
 
   @@map("profiles")
+}
+
+model TarotCard {
+  id         Int      @id
+  name       String
+  name_vi    String
+  meaning    String   @db.Text
+  image_url  String?
+  card_type  String
+  suit       String?
+  number     Int?
+  keywords   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("tarot_cards")
+}
+
+model TarotReading {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  question   String   @db.Text
+  spread_type String
+  card_ids   Json
+  ai_response String  @db.Text
+  created_at DateTime @default(now())
+
+  profile    Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("tarot_readings")
 }
 
 model Transaction {
