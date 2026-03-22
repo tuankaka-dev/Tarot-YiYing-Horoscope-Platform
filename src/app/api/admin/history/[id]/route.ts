@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { ensureTarotInfrastructure } from '@/lib/tarot-bootstrap';
 
 async function verifyAdmin() {
     const supabase = await createClient();
@@ -27,7 +28,7 @@ async function verifyAdmin() {
 }
 
 export async function DELETE(
-    _request: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const admin = await verifyAdmin();
@@ -36,15 +37,29 @@ export async function DELETE(
     }
 
     try {
+        await ensureTarotInfrastructure();
+
         const { id } = await params;
+        const type = request.nextUrl.searchParams.get('type');
 
         if (!id) {
             return NextResponse.json({ error: 'Missing history id' }, { status: 400 });
         }
 
-        await prisma.userHistory.delete({
-            where: { id },
-        });
+        if (type === 'tarot') {
+            const deleted = await prisma.$executeRaw`
+                DELETE FROM tarot_readings
+                WHERE id = ${id}::uuid
+            `;
+
+            if (deleted === 0) {
+                return NextResponse.json({ error: 'History not found' }, { status: 404 });
+            }
+        } else {
+            await prisma.userHistory.delete({
+                where: { id },
+            });
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

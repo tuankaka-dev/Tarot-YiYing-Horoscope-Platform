@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
     CreditCard,
-    DollarSign,
-    CheckCircle2,
-    Clock,
-    TrendingUp,
     ArrowUpRight,
 } from 'lucide-react';
 
@@ -25,12 +21,6 @@ interface TransactionItem {
         email: string;
         full_name: string | null;
     };
-}
-
-interface TransactionStats {
-    totalRevenue: number;
-    totalSuccess: number;
-    totalPending: number;
 }
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
@@ -55,7 +45,6 @@ function formatCurrency(amount: number) {
 
 export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-    const [stats, setStats] = useState<TransactionStats>({ totalRevenue: 0, totalSuccess: 0, totalPending: 0 });
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -64,7 +53,6 @@ export default function AdminTransactionsPage() {
                 const res = await fetch('/api/admin/transactions');
                 if (res.ok) {
                     const data = await res.json();
-                    setStats(data.stats);
                     setTransactions(data.transactions);
                 }
             } catch (error) {

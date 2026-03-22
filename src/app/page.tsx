@@ -35,7 +35,7 @@ export default function LandingPage() {
         const errorData = await res.json().catch(() => ({}));
         toast.error(errorData.error || 'Lỗi khi tạo giao dịch PayOS. Hãy kiểm tra lại API Key trong .env');
       }
-    } catch (e) {
+    } catch {
       toast.error('Lỗi kết nối. Vui lòng thử lại sau.');
     } finally {
       setUpgradingTier(null);

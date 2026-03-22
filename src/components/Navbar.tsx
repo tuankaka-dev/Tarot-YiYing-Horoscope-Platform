@@ -64,7 +64,7 @@ export function Navbar() {
                                             Xem Tử Vi
                                         </Button>
                                     </Link>
-                                    <Link href="/null">
+                                    <Link href="/tarot">
                                         <Button
                                             variant="ghost"
                                             className="text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10"
@@ -197,7 +197,7 @@ export function Navbar() {
                                 Xem Tử Vi
                             </Button>
                         </Link>
-                        <Link href="/null" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/tarot" onClick={() => setIsMobileMenuOpen(false)}>
                             <Button
                                 variant="ghost"
                                 className="w-full justify-start text-mystic-gold hover:text-mystic-gold/80 hover:bg-mystic-gold/10 text-lg py-6"

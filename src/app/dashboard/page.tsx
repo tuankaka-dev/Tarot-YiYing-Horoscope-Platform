@@ -43,22 +43,25 @@ interface LunarCalendarData {
 
 interface HistoryItem {
     id: string;
+    history_type: 'iching' | 'tarot';
     question: string;
     ai_response: string;
-    changing_lines: number[];
+    changing_lines: number[] | null;
     created_at: string;
     main_hexagram: {
         id: number;
         name: string;
         chinese_name: string;
         meaning: string;
-    };
+    } | null;
     changing_hexagram: {
         id: number;
         name: string;
         chinese_name: string;
         meaning: string;
     } | null;
+    tarot_spread_type: string | null;
+    tarot_cards: Array<{ id: number; reversed?: boolean }> | null;
 }
 
 export default function DashboardPage() {
@@ -109,12 +112,12 @@ export default function DashboardPage() {
         }
     };
 
-    const deleteHistory = async (id: string) => {
+    const deleteHistory = async (id: string, historyType: 'iching' | 'tarot') => {
         try {
-            const res = await fetch(`/api/history?id=${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/history?id=${id}&type=${historyType}`, { method: 'DELETE' });
             if (res.ok) {
                 setHistories((prev) => prev.filter((h) => h.id !== id));
-                toast.success('Đã xoá lần gieo quẻ');
+                toast.success('Đã xóa bản ghi lịch sử');
             }
         } catch {
             toast.error('Xoá thất bại');
@@ -370,17 +373,24 @@ export default function DashboardPage() {
                     <div className="space-y-1">
                         <h1 className="text-2xl md:text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
                             <History className="w-6 h-6 md:w-8 md:h-8" />
-                            Lịch Sử Gieo Quẻ
+                            Lịch Sử Trải Nghiệm
                         </h1>
                         <p className="text-sm md:text-base text-muted-foreground">
-                            {histories.length} lần gieo quẻ đã được ghi lại
+                            {histories.length} bản ghi Kinh Dịch và Tarot
                         </p>
                     </div>
-                    <Link href="/divine" className="w-full sm:w-auto">
-                        <Button className="w-full gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 text-white">
-                            Gieo Quẻ Mới
-                        </Button>
-                    </Link>
+                    <div className="w-full sm:w-auto flex gap-2">
+                        <Link href="/divine" className="w-full sm:w-auto">
+                            <Button className="w-full gap-2 bg-gradient-to-r from-mystic-gold to-amber-600 text-white">
+                                Gieo Quẻ Mới
+                            </Button>
+                        </Link>
+                        <Link href="/tarot" className="w-full sm:w-auto">
+                            <Button className="w-full gap-2 bg-gradient-to-r from-fuchsia-700 to-violet-700 text-white">
+                                Trải Tarot
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
                 {/* History list */}
                 {isLoading ? (
@@ -392,15 +402,22 @@ export default function DashboardPage() {
                 ) : histories.length === 0 ? (
                     <Card className="bg-card/30 backdrop-blur border-mystic-purple/20 p-12 text-center">
                         <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">Chưa có lần gieo quẻ nào</h3>
+                        <h3 className="text-xl font-semibold mb-2">Chưa có lịch sử nào</h3>
                         <p className="text-muted-foreground mb-6">
-                            Bắt đầu gieo quẻ đầu tiên để khám phá trí tuệ Kinh Dịch.
+                            Bắt đầu gieo quẻ hoặc trải Tarot để lưu lại hành trình của bạn.
                         </p>
-                        <Link href="/divine">
-                            <Button className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 text-black font-semibold">
-                                Gieo Quẻ Đầu Tiên
-                            </Button>
-                        </Link>
+                        <div className="flex flex-wrap justify-center gap-2">
+                            <Link href="/divine">
+                                <Button className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 text-black font-semibold">
+                                    Gieo Quẻ Đầu Tiên
+                                </Button>
+                            </Link>
+                            <Link href="/tarot">
+                                <Button className="gap-2 bg-gradient-to-r from-fuchsia-700 to-violet-700 text-white font-semibold">
+                                    Trải Tarot Đầu Tiên
+                                </Button>
+                            </Link>
+                        </div>
                     </Card>
                 ) : (
                     <AnimatePresence>
@@ -425,20 +442,36 @@ export default function DashboardPage() {
                                                     &quot;{item.question}&quot;
                                                 </CardTitle>
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <Badge variant="outline" className="border-mystic-gold/30 text-mystic-gold">
-                                                        {item.main_hexagram.name}
-                                                    </Badge>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {item.main_hexagram.meaning}
-                                                    </span>
-                                                    {item.changing_hexagram && (
+                                                    {item.history_type === 'iching' && item.main_hexagram ? (
                                                         <>
-                                                            <span className="text-muted-foreground">→</span>
                                                             <Badge variant="outline" className="border-mystic-gold/30 text-mystic-gold">
-                                                                {item.changing_hexagram.name}
+                                                                {item.main_hexagram.name}
                                                             </Badge>
                                                             <span className="text-sm text-muted-foreground">
-                                                                {item.changing_hexagram.meaning}
+                                                                {item.main_hexagram.meaning}
+                                                            </span>
+                                                            {item.changing_hexagram && (
+                                                                <>
+                                                                    <span className="text-muted-foreground">→</span>
+                                                                    <Badge variant="outline" className="border-mystic-gold/30 text-mystic-gold">
+                                                                        {item.changing_hexagram.name}
+                                                                    </Badge>
+                                                                    <span className="text-sm text-muted-foreground">
+                                                                        {item.changing_hexagram.meaning}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Badge variant="outline" className="border-fuchsia-500/30 text-fuchsia-600">
+                                                                Tarot
+                                                            </Badge>
+                                                            <span className="text-sm text-muted-foreground">
+                                                                Trải {item.tarot_spread_type === 'one_card' ? '1 lá' : item.tarot_spread_type === 'three_card' ? '3 lá' : '5 lá'}
+                                                            </span>
+                                                            <span className="text-sm text-muted-foreground">
+                                                                {item.tarot_cards?.length || 0} lá đã rút
                                                             </span>
                                                         </>
                                                     )}
@@ -468,7 +501,7 @@ export default function DashboardPage() {
                                                 <CardContent className="pt-0 space-y-4">
                                                     <Separator className="bg-border/50" />
                                                     <div className="ai-response text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
-                                                        {item.ai_response}
+                                                        {item.ai_response || 'Chưa có thông điệp chuyên sâu cho lần trải này.'}
                                                     </div>
                                                     <div className="flex justify-end">
                                                         <Button
@@ -476,7 +509,7 @@ export default function DashboardPage() {
                                                             size="sm"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                deleteHistory(item.id);
+                                                                deleteHistory(item.id, item.history_type);
                                                             }}
                                                             className="gap-1 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                                                         >

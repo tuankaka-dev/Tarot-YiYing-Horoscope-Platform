@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { User, Save, Loader2, Coins, Sun, Bell, Calendar, Crown, Zap } from 'lucide-react';
+import { User, Save, Loader2, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {

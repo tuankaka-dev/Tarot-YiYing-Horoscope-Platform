@@ -170,7 +170,7 @@ export default function AdminApiConfigPage() {
             } else {
                 toast.error(data.message || data.error || 'Lỗi kết nối', { id: toastId });
             }
-        } catch (err) {
+        } catch {
             toast.error('Lỗi khi gọi API kiểm tra', { id: toastId });
         } finally {
             setTestingId(null);

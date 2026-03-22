@@ -1,12 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
+import { ensureTarotInfrastructure } from '@/lib/tarot-bootstrap';
 
 type HistoryFilters = {
     q?: string;
     from?: Date;
     to?: Date;
 };
+
+type CombinedHistoryRow = {
+    id: string;
+    history_type: 'iching' | 'tarot';
+    user_id: string;
+    question: string;
+    ai_response: string;
+    created_at: string;
+    email: string;
+    full_name: string | null;
+    main_hexagram_id: number | null;
+    main_hexagram_name: string | null;
+    changing_hexagram_id: number | null;
+    changing_hexagram_name: string | null;
+    tarot_spread_type: string | null;
+    tarot_cards: unknown;
+};
+
+const baseCombinedSql = Prisma.sql`
+    SELECT
+        uh.id,
+        'iching'::text AS history_type,
+        uh.user_id,
+        uh.question,
+        uh.ai_response,
+        uh.created_at,
+        p.email,
+        p.full_name,
+        mh.id AS main_hexagram_id,
+        mh.name AS main_hexagram_name,
+        ch.id AS changing_hexagram_id,
+        ch.name AS changing_hexagram_name,
+        NULL::text AS tarot_spread_type,
+        NULL::jsonb AS tarot_cards
+    FROM user_histories uh
+    INNER JOIN profiles p ON p.id = uh.user_id
+    INNER JOIN hexagrams mh ON mh.id = uh.main_hexagram_id
+    LEFT JOIN hexagrams ch ON ch.id = uh.changing_hexagram_id
+
+    UNION ALL
+
+    SELECT
+        tr.id,
+        'tarot'::text AS history_type,
+        tr.user_id,
+        tr.question,
+        tr.ai_response,
+        tr.created_at,
+        p.email,
+        p.full_name,
+        NULL::int AS main_hexagram_id,
+        NULL::text AS main_hexagram_name,
+        NULL::int AS changing_hexagram_id,
+        NULL::text AS changing_hexagram_name,
+        tr.spread_type AS tarot_spread_type,
+        tr.card_ids AS tarot_cards
+    FROM tarot_readings tr
+    INNER JOIN profiles p ON p.id = tr.user_id
+`;
+
+function buildWhereClause(filters: HistoryFilters) {
+    const conditions: Prisma.Sql[] = [];
+
+    if (filters.q) {
+        const like = `%${filters.q}%`;
+        conditions.push(
+            Prisma.sql`(combined.email ILIKE ${like} OR COALESCE(combined.full_name, '') ILIKE ${like} OR combined.question ILIKE ${like})`
+        );
+    }
+
+    if (filters.from) {
+        conditions.push(Prisma.sql`combined.created_at >= ${filters.from}`);
+    }
+
+    if (filters.to) {
+        conditions.push(Prisma.sql`combined.created_at <= ${filters.to}`);
+    }
+
+    if (conditions.length === 0) {
+        return Prisma.empty;
+    }
+
+    return Prisma.sql`WHERE ${Prisma.join(conditions, ' AND ')}`;
+}
 
 async function verifyAdmin() {
     const supabase = await createClient();
@@ -78,57 +164,32 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        await ensureTarotInfrastructure();
+
         const { page, pageSize, filters } = parseFilters(request);
 
-        const whereClause = {
-            ...(filters.q
-                ? {
-                    OR: [
-                        { profile: { email: { contains: filters.q, mode: 'insensitive' as const } } },
-                        { profile: { full_name: { contains: filters.q, mode: 'insensitive' as const } } },
-                        { question: { contains: filters.q, mode: 'insensitive' as const } },
-                    ],
-                }
-                : {}),
-            ...(filters.from || filters.to
-                ? {
-                    created_at: {
-                        ...(filters.from ? { gte: filters.from } : {}),
-                        ...(filters.to ? { lte: filters.to } : {}),
-                    },
-                }
-                : {}),
-        };
+        const whereSql = buildWhereClause(filters);
+        const offset = (page - 1) * pageSize;
 
-        const [total, histories] = await Promise.all([
-            prisma.userHistory.count({ where: whereClause }),
-            prisma.userHistory.findMany({
-                where: whereClause,
-                orderBy: { created_at: 'desc' },
-                skip: (page - 1) * pageSize,
-                take: pageSize,
-                include: {
-                    profile: {
-                        select: {
-                            email: true,
-                            full_name: true,
-                        },
-                    },
-                    main_hexagram: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                    changing_hexagram: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                },
-            }),
+        const [countRows, histories] = await Promise.all([
+            prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+                WITH combined AS (${baseCombinedSql})
+                SELECT COUNT(*)::bigint AS total
+                FROM combined
+                ${whereSql}
+            `),
+            prisma.$queryRaw<CombinedHistoryRow[]>(Prisma.sql`
+                WITH combined AS (${baseCombinedSql})
+                SELECT *
+                FROM combined
+                ${whereSql}
+                ORDER BY combined.created_at DESC
+                LIMIT ${pageSize}
+                OFFSET ${offset}
+            `),
         ]);
+
+        const total = Number(countRows[0]?.total || 0);
 
         return NextResponse.json({
             data: histories,
@@ -152,22 +213,63 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const body = await request.json();
-        const ids = Array.isArray(body?.ids)
-            ? body.ids.filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
-            : [];
+        await ensureTarotInfrastructure();
 
-        if (ids.length === 0) {
+        const body = await request.json();
+        const rawIds: unknown[] = Array.isArray(body?.ids) ? body.ids : [];
+
+        const normalized = rawIds.reduce<Array<{ id: string; history_type: 'iching' | 'tarot' }>>(
+            (acc, item) => {
+                if (typeof item === 'string') {
+                    acc.push({ id: item, history_type: 'iching' });
+                    return acc;
+                }
+
+                if (item && typeof item === 'object') {
+                    const id = (item as { id?: unknown }).id;
+                    const historyType = (item as { history_type?: unknown }).history_type;
+
+                    if (
+                        typeof id === 'string' &&
+                        id.length > 0 &&
+                        (historyType === 'iching' || historyType === 'tarot')
+                    ) {
+                        acc.push({ id, history_type: historyType });
+                    }
+                }
+
+                return acc;
+            },
+            []
+        );
+
+        if (normalized.length === 0) {
             return NextResponse.json({ error: 'Missing ids for bulk delete' }, { status: 400 });
         }
 
-        const deleted = await prisma.userHistory.deleteMany({
-            where: {
-                id: { in: ids },
-            },
-        });
+        const ichingIds = normalized.filter((item) => item.history_type === 'iching').map((item) => item.id);
+        const tarotIds = normalized.filter((item) => item.history_type === 'tarot').map((item) => item.id);
 
-        return NextResponse.json({ success: true, deletedCount: deleted.count });
+        let deletedCount = 0;
+
+        if (ichingIds.length > 0) {
+            const deletedIChing = await prisma.userHistory.deleteMany({
+                where: {
+                    id: { in: ichingIds },
+                },
+            });
+            deletedCount += deletedIChing.count;
+        }
+
+        if (tarotIds.length > 0) {
+            const deletedTarot = await prisma.$executeRaw`
+                DELETE FROM tarot_readings
+                WHERE id::text IN (${Prisma.join(tarotIds)})
+            `;
+            deletedCount += deletedTarot;
+        }
+
+        return NextResponse.json({ success: true, deletedCount });
     } catch (error) {
         console.error('Admin bulk history delete error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -89,8 +89,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Protect /divine routes  
-    if (pathname.startsWith('/divine') && !user) {
+    // Protect /divine and /tarot routes
+    if ((pathname.startsWith('/divine') || pathname.startsWith('/tarot')) && !user) {
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         return NextResponse.redirect(url);

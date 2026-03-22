@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,22 +10,19 @@ import { toast } from 'sonner';
 
 type HistoryItem = {
     id: string;
+    history_type: 'iching' | 'tarot';
     user_id: string;
     question: string;
     ai_response: string;
     created_at: string;
-    profile: {
-        email: string;
-        full_name: string | null;
-    };
-    main_hexagram: {
-        id: number;
-        name: string;
-    };
-    changing_hexagram: {
-        id: number;
-        name: string;
-    } | null;
+    email: string;
+    full_name: string | null;
+    main_hexagram_id: number | null;
+    main_hexagram_name: string | null;
+    changing_hexagram_id: number | null;
+    changing_hexagram_name: string | null;
+    tarot_spread_type: string | null;
+    tarot_cards: Array<{ id: number; reversed?: boolean }> | null;
 };
 
 type Pagination = {
@@ -104,6 +101,7 @@ export default function AdminHistoryPage() {
             setSelectedIds((prev) => prev.filter((id) => !items.some((item) => item.id === id)));
             return;
         }
+
         setSelectedIds((prev) => {
             const set = new Set(prev);
             items.forEach((item) => set.add(item.id));
@@ -120,9 +118,12 @@ export default function AdminHistoryPage() {
     const handleDeleteOne = async (id: string) => {
         if (!confirm('Xóa vĩnh viễn lịch sử này?')) return;
 
+        const item = items.find((entry) => entry.id === id);
+        const typeQuery = item?.history_type === 'tarot' ? '?type=tarot' : '?type=iching';
+
         setIsDeleting(true);
         try {
-            const res = await fetch(`/api/admin/history/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/admin/history/${id}${typeQuery}`, { method: 'DELETE' });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.error || 'Xóa thất bại');
@@ -146,7 +147,12 @@ export default function AdminHistoryPage() {
             const res = await fetch('/api/admin/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: selectedIds }),
+                body: JSON.stringify({
+                    ids: selectedIds.map((id) => {
+                        const item = items.find((entry) => entry.id === id);
+                        return { id, history_type: item?.history_type || 'iching' };
+                    }),
+                }),
             });
 
             if (!res.ok) {
@@ -169,10 +175,10 @@ export default function AdminHistoryPage() {
             <div>
                 <h1 className="text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
                     <History className="w-8 h-8" />
-                    Quản Lý Lịch Sử Gieo Quẻ
+                    Quản Lý Lịch Sử Người Dùng
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    Theo dõi, lọc và xóa lịch sử gieo quẻ của người dùng
+                    Theo dõi, lọc và xóa lịch sử Kinh Dịch và Tarot của người dùng
                 </p>
             </div>
 
@@ -194,24 +200,11 @@ export default function AdminHistoryPage() {
                                 Lọc
                             </Button>
                         </div>
-                        <Input
-                            type="date"
-                            value={fromDate}
-                            onChange={(e) => setFromDate(e.target.value)}
-                        />
-                        <Input
-                            type="date"
-                            value={toDate}
-                            onChange={(e) => setToDate(e.target.value)}
-                        />
+                        <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                        <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => fetchHistory(1)}
-                            disabled={isLoading}
-                        >
+                        <Button variant="outline" className="gap-2" onClick={() => fetchHistory(1)} disabled={isLoading}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                             Làm mới
                         </Button>
@@ -255,7 +248,8 @@ export default function AdminHistoryPage() {
                                             </th>
                                             <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">Người dùng</th>
                                             <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">Câu hỏi</th>
-                                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">Quẻ</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">Loại</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">Nội dung</th>
                                             <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">AI</th>
                                             <th className="px-3 py-2 text-right text-xs font-semibold uppercase text-muted-foreground">Thời gian</th>
                                             <th className="px-3 py-2 text-right text-xs font-semibold uppercase text-muted-foreground">Hành động</th>
@@ -264,8 +258,9 @@ export default function AdminHistoryPage() {
                                     <tbody>
                                         {items.map((item) => {
                                             const hasAiResponse = item.ai_response.trim().length > 0;
+
                                             return (
-                                                <tr key={item.id} className="border-b border-border/30 align-top">
+                                                <tr key={`${item.history_type}-${item.id}`} className="border-b border-border/30 align-top">
                                                     <td className="px-3 py-3">
                                                         <input
                                                             type="checkbox"
@@ -275,26 +270,45 @@ export default function AdminHistoryPage() {
                                                         />
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        <p className="font-medium">{item.profile.full_name || '—'}</p>
-                                                        <p className="text-xs text-muted-foreground">{item.profile.email}</p>
+                                                        <p className="font-medium">{item.full_name || '—'}</p>
+                                                        <p className="text-xs text-muted-foreground">{item.email}</p>
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <p className="line-clamp-3 text-sm leading-relaxed max-w-[320px]">{item.question}</p>
                                                     </td>
                                                     <td className="px-3 py-3">
-                                                        <p className="text-sm">{item.main_hexagram.id}. {item.main_hexagram.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {item.changing_hexagram
-                                                                ? `Biến: ${item.changing_hexagram.id}. ${item.changing_hexagram.name}`
-                                                                : 'Không có quẻ biến'}
-                                                        </p>
+                                                        <Badge
+                                                            className={
+                                                                item.history_type === 'iching'
+                                                                    ? 'bg-mystic-gold/10 text-mystic-gold border-mystic-gold/30'
+                                                                    : 'bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/30'
+                                                            }
+                                                        >
+                                                            {item.history_type === 'iching' ? 'Kinh Dịch' : 'Tarot'}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-3 py-3">
+                                                        {item.history_type === 'iching' ? (
+                                                            <>
+                                                                <p className="text-sm">{item.main_hexagram_id}. {item.main_hexagram_name}</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {item.changing_hexagram_id
+                                                                        ? `Biến: ${item.changing_hexagram_id}. ${item.changing_hexagram_name}`
+                                                                        : 'Không có quẻ biến'}
+                                                                </p>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <p className="text-sm">{item.tarot_spread_type === 'one_card' ? 'Trải 1 lá' : item.tarot_spread_type === 'three_card' ? 'Trải 3 lá' : 'Trải 5 lá'}</p>
+                                                                <p className="text-xs text-muted-foreground">{item.tarot_cards?.length || 0} lá đã rút</p>
+                                                            </>
+                                                        )}
                                                     </td>
                                                     <td className="px-3 py-3">
                                                         <Badge
                                                             className={hasAiResponse
                                                                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                                                            }
+                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}
                                                         >
                                                             {hasAiResponse ? 'Đã có AI' : 'Chưa có AI'}
                                                         </Badge>

@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Shield, Users, Settings, LayoutDashboard, BookOpen, CreditCard, Bell, History } from 'lucide-react';
+import { Shield, Users, Settings, LayoutDashboard, BookOpen, CreditCard, Bell, History, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
     { href: '/admin', label: 'Tổng Quan', icon: LayoutDashboard },
     { href: '/admin/users', label: 'Quản Lý Người Dùng', icon: Users },
     { href: '/admin/hexagrams', label: 'Quản Lý Quẻ Dịch', icon: BookOpen },
+    { href: '/admin/tarot', label: 'Quản Lý Tarot', icon: Sparkles },
     { href: '/admin/transactions', label: 'Giao Dịch', icon: CreditCard },
     { href: '/admin/history', label: 'Lịch Sử Gieo Quẻ', icon: History },
     { href: '/admin/notifications', label: 'Thông Báo', icon: Bell },

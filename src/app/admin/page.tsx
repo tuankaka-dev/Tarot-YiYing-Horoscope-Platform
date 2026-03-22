@@ -19,19 +19,21 @@ export default function AdminOverviewPage() {
     useEffect(() => {
         async function fetchStats() {
             try {
-                const [usersRes, configRes, txRes] = await Promise.all([
+                const [usersRes, configRes, txRes, historyRes] = await Promise.all([
                     fetch('/api/admin/users'),
                     fetch('/api/admin/api-config'),
                     fetch('/api/admin/transactions'),
+                    fetch('/api/admin/history?page=1&pageSize=1'),
                 ]);
 
                 if (usersRes.ok) {
                     const users = await usersRes.json();
-                    const totalReadings = users.reduce(
-                        (acc: number, u: { _count: { histories: number } }) => acc + u._count.histories,
-                        0
-                    );
-                    setStats((prev) => ({ ...prev, users: users.length, readings: totalReadings }));
+                    setStats((prev) => ({ ...prev, users: users.length }));
+                }
+
+                if (historyRes.ok) {
+                    const historyData = await historyRes.json();
+                    setStats((prev) => ({ ...prev, readings: historyData.pagination?.total || 0 }));
                 }
 
                 if (configRes.ok) {
@@ -113,7 +115,7 @@ export default function AdminOverviewPage() {
         <div className="space-y-8">
             <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-mystic-purple mb-2">
-                    Release 1.1.3 - Cập nhật ngày 22/3/2026
+                    Release 1.1.5 - Cập nhật ngày 22/3/2026
                 </p>
                 <h1 className="text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
                     <Activity className="w-8 h-8" />
