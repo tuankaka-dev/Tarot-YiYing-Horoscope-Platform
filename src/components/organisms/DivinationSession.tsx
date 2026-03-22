@@ -482,40 +482,42 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-start justify-center gap-8">
+                                    <div className="flex flex-col md:flex-row items-stretch justify-center gap-8">
                                         {/* Main hexagram */}
-                                        <div className="text-center space-y-3 flex-1 w-full">
-                                            <p className="text-sm text-muted-foreground">Quẻ Chính</p>
-                                            <div className="w-40 mx-auto">
-                                                <HexagramDisplay
-                                                    lines={lines}
-                                                    changingLines={changingLines.map((l) => l - 1)}
-                                                    animated={true}
-                                                />
+                                        <div className="flex flex-1 w-full flex-col text-center">
+                                            <div className="space-y-3 flex-1">
+                                                <p className="text-sm text-muted-foreground">Quẻ Chính</p>
+                                                <div className="w-40 mx-auto">
+                                                    <HexagramDisplay
+                                                        lines={lines}
+                                                        changingLines={changingLines.map((l) => l - 1)}
+                                                        animated={true}
+                                                    />
+                                                </div>
+                                                {mainHexagram && (
+                                                    <div>
+                                                        <p className="text-2xl font-bold text-mystic-gold">
+                                                            Quẻ {mainHexagram.id}: {mainHexagram.name}
+                                                        </p>
+                                                        <p className="text-sm font-medium text-foreground/70">
+                                                            {mainHexagram.trigram_above} / {mainHexagram.trigram_below}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground mt-1">{mainHexagram.meaning}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">{mainHexagram.description}</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            {mainHexagram && (
-                                                <div>
-                                                    <p className="text-2xl font-bold text-mystic-gold">
-                                                        Quẻ {mainHexagram.id}: {mainHexagram.name}
-                                                    </p>
-                                                    <p className="text-sm font-medium text-foreground/70">
-                                                        {mainHexagram.trigram_above} / {mainHexagram.trigram_below}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-1">{mainHexagram.meaning}</p>
-                                                    <p className="text-xs text-muted-foreground mt-1">{mainHexagram.description}</p>
-                                                    {mainHexagram.image_url && (
-                                                        <div className="mt-4 flex justify-center">
-                                                            <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
-                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                <img
-                                                                    src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
-                                                                    alt={mainHexagram.name}
-                                                                    className="w-full h-auto object-contain"
-                                                                />
-                                                                <ImageWatermarkOverlay />
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                            {mainHexagram?.image_url && (
+                                                <div className="mt-4 flex justify-center">
+                                                    <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img
+                                                            src={getDriveEmbedUrl(mainHexagram.image_url) || ''}
+                                                            alt={mainHexagram.name}
+                                                            className="w-full h-auto object-contain"
+                                                        />
+                                                        <ImageWatermarkOverlay />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -524,34 +526,36 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         {changingHexagram && (
                                             <>
                                                 <div className="text-3xl text-mystic-purple animate-pulse self-center md:self-start md:mt-20">→</div>
-                                                <div className="text-center space-y-3 flex-1 w-full">
-                                                    <p className="text-sm text-muted-foreground">Quẻ Biến</p>
-                                                    <div className="w-40 mx-auto">
-                                                        <HexagramDisplay lines={changingHexLines} animated={true} />
+                                                <div className="flex flex-1 w-full flex-col text-center">
+                                                    <div className="space-y-3 flex-1">
+                                                        <p className="text-sm text-muted-foreground">Quẻ Biến</p>
+                                                        <div className="w-40 mx-auto">
+                                                            <HexagramDisplay lines={changingHexLines} animated={true} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-2xl font-bold text-mystic-gold">
+                                                                Quẻ {changingHexagram.id}: {changingHexagram.name}
+                                                            </p>
+                                                            <p className="text-sm font-medium text-foreground/70">
+                                                                {changingHexagram.trigram_above} / {changingHexagram.trigram_below}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground mt-1">{changingHexagram.meaning}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">{changingHexagram.description}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-2xl font-bold text-mystic-gold">
-                                                            Quẻ {changingHexagram.id}: {changingHexagram.name}
-                                                        </p>
-                                                        <p className="text-sm font-medium text-foreground/70">
-                                                            {changingHexagram.trigram_above} / {changingHexagram.trigram_below}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground mt-1">{changingHexagram.meaning}</p>
-                                                        <p className="text-xs text-muted-foreground mt-1">{changingHexagram.description}</p>
-                                                        {changingHexagram.image_url && (
-                                                            <div className="mt-4 flex justify-center">
-                                                                <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img
-                                                                        src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
-                                                                        alt={changingHexagram.name}
-                                                                        className="w-full h-auto object-contain"
-                                                                    />
-                                                                    <ImageWatermarkOverlay />
-                                                                </div>
+                                                    {changingHexagram.image_url && (
+                                                        <div className="mt-4 flex justify-center">
+                                                            <div className="relative rounded-md w-full max-w-[450px] overflow-hidden border border-mystic-gold/20 shadow-sm">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img
+                                                                    src={getDriveEmbedUrl(changingHexagram.image_url) || ''}
+                                                                    alt={changingHexagram.name}
+                                                                    className="w-full h-auto object-contain"
+                                                                />
+                                                                <ImageWatermarkOverlay />
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </>
                                         )}
