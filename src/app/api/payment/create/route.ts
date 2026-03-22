@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
         });
 
         // Determine URLs
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+        if (!baseUrl) {
+            throw new Error("NEXT_PUBLIC_APP_URL is not defined! Check your .env file.");
+        }
         const returnUrl = `${baseUrl}/dashboard?payment=success`;
         const cancelUrl = `${baseUrl}/dashboard?payment=cancel`;
 

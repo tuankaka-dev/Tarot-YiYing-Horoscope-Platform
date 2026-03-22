@@ -12,19 +12,32 @@ export async function HEAD() {
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        const rawBody = await request.text();
+        if (!rawBody.trim()) {
+            // PayOS URL verification may send an empty body.
+            return NextResponse.json({ success: true, ignored: 'empty_body' });
+        }
+
+        let body: unknown;
+        try {
+            body = JSON.parse(rawBody);
+        } catch {
+            console.warn('PayOS webhook received non-JSON payload');
+            return NextResponse.json({ success: true, ignored: 'invalid_json' });
+        }
 
         // Verify webhook data from PayOS using v2 SDK
         let webhookData;
         try {
-            webhookData = await getPayOS().webhooks.verify(body);
+            webhookData = await getPayOS().webhooks.verify(body as never);
         } catch {
             console.error('PayOS webhook verification failed');
             return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
         }
         
         // Anti-Replay: Check webhook age if timestamp is provided
-        const extractTimestamp = body.timestamp || body.data?.timestamp;
+        const bodyObject = body as { timestamp?: string; data?: { timestamp?: string } };
+        const extractTimestamp = bodyObject.timestamp || bodyObject.data?.timestamp;
         if (extractTimestamp) {
             const webhookTimestamp = new Date(extractTimestamp);
             const now = new Date();

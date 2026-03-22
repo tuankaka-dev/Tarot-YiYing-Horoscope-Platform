@@ -64,10 +64,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signInWithGoogle: async () => {
         const supabase = createClient();
+        const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL;
+        const redirectBase =
+            configuredBaseUrl &&
+            /^https?:\/\//i.test(configuredBaseUrl) &&
+            !(configuredBaseUrl.includes('localhost') && window.location.hostname !== 'localhost')
+                ? configuredBaseUrl.replace(/\/$/, '')
+                : window.location.origin;
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: `${redirectBase}/auth/callback`,
             },
         });
         if (error) return { error: error.message };
