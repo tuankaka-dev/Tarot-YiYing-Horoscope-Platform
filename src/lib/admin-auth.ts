@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -16,10 +15,10 @@ export async function verifyAdmin() {
         return user;
     }
 
-    // Fallback: Check role via Supabase Auth client to respect RLS
+    // Fallback: Check role via PostgREST table
     try {
         const { data: profile, error } = await supabase
-            .from('Profile')
+            .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single();

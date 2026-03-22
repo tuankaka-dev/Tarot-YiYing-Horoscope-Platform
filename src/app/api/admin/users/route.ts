@@ -71,7 +71,13 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
         }
 
-        const updateObj: Record<string, any> = {};
+        const updateObj: {
+            role?: string;
+            is_banned?: boolean;
+            is_premium?: boolean;
+            is_pro?: boolean;
+            premium_until?: Date | null;
+        } = {};
         if (role !== undefined) {
             updateObj.role = role;
             

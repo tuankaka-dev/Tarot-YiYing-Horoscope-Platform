@@ -50,20 +50,34 @@ export async function GET() {
 // POST /api/profile — Create profile
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { id, email, full_name } = body;
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!id || !email) {
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { email, full_name } = body;
+
+        const safeEmail = typeof email === 'string' && email.trim()
+            ? email.trim()
+            : (user.email || '');
+
+        if (!safeEmail) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const profile = await prisma.profile.upsert({
-            where: { id },
-            update: { email, full_name },
+            where: { id: user.id },
+            update: {
+                email: safeEmail,
+                full_name: typeof full_name === 'string' ? full_name : null,
+            },
             create: {
-                id,
-                email,
-                full_name: full_name || null,
+                id: user.id,
+                email: safeEmail,
+                full_name: typeof full_name === 'string' ? full_name : null,
                 role: 'user',
             },
         });
@@ -78,15 +92,18 @@ export async function POST(request: NextRequest) {
 // PUT /api/profile — Update profile
 export async function PUT(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { id, full_name, avatar_url } = body;
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!id) {
-            return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const body = await request.json();
+        const { full_name, avatar_url } = body;
+
         const profile = await prisma.profile.update({
-            where: { id },
+            where: { id: user.id },
             data: {
                 ...(full_name !== undefined && { full_name }),
                 ...(avatar_url !== undefined && { avatar_url }),

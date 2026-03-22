@@ -102,7 +102,7 @@ export function Navbar() {
                                         <div className="px-3 py-2 flex flex-col gap-1">
                                             <div className="flex items-center gap-2">
                                                 <p className="text-sm font-semibold truncate max-w-[130px]">{profile?.full_name || 'Người dùng'}</p>
-                                                {(profile as any)?.is_pro ? (
+                                                {profile?.is_pro ? (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-amber-500 bg-amber-500/10 animate-pulse shadow-[0_0_5px_rgba(245,158,11,0.3)]">
                                                         <Zap className="w-3 h-3 text-amber-500" />
                                                         <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">PRO</span>

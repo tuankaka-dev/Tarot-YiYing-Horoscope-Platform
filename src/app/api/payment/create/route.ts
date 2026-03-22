@@ -6,6 +6,13 @@ import { getPayOS } from '@/lib/payos';
 const PREMIUM_WEEKLY_PRICE = 50000;
 const PRO_MONTHLY_PRICE = 100000;
 const PREMIUM_CREDITS_BONUS = 100;
+const MAX_ORDER_CODE_RETRIES = 3;
+
+function generateOrderCode(): number {
+    const timestampPart = Date.now().toString().slice(-6);
+    const randomPart = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    return Number(timestampPart + randomPart);
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -28,17 +35,22 @@ export async function POST(request: NextRequest) {
         const price = isPro ? PRO_MONTHLY_PRICE : PREMIUM_WEEKLY_PRICE;
         const description = isPro ? 'Goi PRO 1 thang - GieoQue' : 'Premium 7 ngay - GieoQue';
 
-        // Generate a robust unique numeric order code (PayOS requires it to be < Number.MAX_SAFE_INTEGER)
-        const timestampPart = Date.now().toString().slice(-6);
-        const randomPart = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-        const orderCode = Number(timestampPart + randomPart);
+        let orderCode: number | null = null;
 
-        const existing = await prisma.transaction.findUnique({
-            where: { payos_order_id: orderCode.toString() }
-        });
+        for (let attempt = 0; attempt < MAX_ORDER_CODE_RETRIES; attempt++) {
+            const candidate = generateOrderCode();
+            const existing = await prisma.transaction.findUnique({
+                where: { payos_order_id: candidate.toString() }
+            });
 
-        if (existing) {
-            return NextResponse.json({ error: 'Order code collision' }, { status: 409 });
+            if (!existing) {
+                orderCode = candidate;
+                break;
+            }
+        }
+
+        if (!orderCode) {
+            return NextResponse.json({ error: 'Unable to generate order code' }, { status: 503 });
         }
 
         // Create pending transaction

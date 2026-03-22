@@ -86,7 +86,7 @@ export default function LoginPage() {
                                 <span className="w-full border-t border-border" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white/90 px-2 text-muted-foreground">Oặc</span>
+                                <span className="bg-white/90 px-2 text-muted-foreground">Hoặc</span>
                             </div>
                         </div>
 

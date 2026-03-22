@@ -61,7 +61,8 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        let { mainHexagramId, changingHexagramId, changingLines, question, historyId } = body;
+        let { mainHexagramId, changingHexagramId, question } = body;
+        const { changingLines, historyId } = body;
 
         mainHexagramId = parseInt(mainHexagramId);
         if (isNaN(mainHexagramId) || mainHexagramId < 1 || mainHexagramId > 64) {
@@ -125,6 +126,8 @@ export async function POST(request: NextRequest) {
             } else {
                 aiResponseText = await callCustomAPI(apiConfig, prompt);
             }
+
+            aiResponseText = sanitizeInterpretationText(aiResponseText);
         } catch (aiError) {
             console.error('Divine API AI call error for user:', {
                 userId: user.id,
@@ -231,9 +234,30 @@ Hãy đưa ra lời giải quẻ Kinh Dịch toàn diện bằng tiếng Việt,
 ${changingHex ? '4' : '3'}. Lời Khuyên — Hướng dẫn cụ thể, thiết thực mà người cầu quẻ có thể áp dụng.
 ${changingHex ? '5' : '4'}. Lời Kết — Một câu châm ngôn hoặc lời dạy cổ xưa bao quát tinh hoa của quẻ này.
 
-Sử dụng giọng văn ấm áp, uyên bác. Kết hợp chiều sâu triết học với sự rõ ràng thực tế. Giữ câu trả lời có cấu trúc rõ ràng nhưng tự nhiên — không quá hình thức.`;
+Sử dụng giọng văn ấm áp, uyên bác. Kết hợp chiều sâu triết học với sự rõ ràng thực tế.
+
+Định dạng bắt buộc:
+- Chỉ trả về văn bản thuần (plain text), KHÔNG dùng Markdown.
+- Không dùng ký tự #, **, *, -, • để tạo tiêu đề hoặc bullet.
+- Viết thành các đoạn rõ ràng, mỗi mục bắt đầu bằng tên mục dạng văn xuôi (ví dụ: "Tổng quan tình hình:").`;
 
     return prompt;
+}
+
+function sanitizeInterpretationText(raw: string): string {
+    if (!raw) return '';
+
+    return raw
+        .replace(/\r\n/g, '\n')
+        .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/__(.*?)__/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/_(.*?)_/g, '$1')
+        .replace(/^\s*[-*•]+\s+/gm, '')
+        .replace(/^\s*\d+[.)]\s+/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
 }
 
 // ============================================================

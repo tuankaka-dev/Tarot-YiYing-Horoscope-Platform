@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
         }
 
         const limitParam = request.nextUrl.searchParams.get('limit');
-        const limit = limitParam ? parseInt(limitParam) : 50;
+        const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : 50;
+        const limit = Number.isFinite(parsedLimit)
+            ? Math.min(Math.max(parsedLimit, 1), 100)
+            : 50;
 
         const histories = await prisma.userHistory.findMany({
             where: { user_id: user.id },

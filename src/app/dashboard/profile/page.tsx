@@ -41,7 +41,7 @@ export default function ProfilePage() {
             const res = await fetch('/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: user.id, full_name: fullName }),
+                body: JSON.stringify({ full_name: fullName }),
             });
 
             if (res.ok) {

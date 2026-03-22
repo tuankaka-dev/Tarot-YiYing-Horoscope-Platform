@@ -10,7 +10,36 @@ import { History, Trash2, ChevronDown, ChevronUp, BookOpen, Coins, Sun, Bell, Ca
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
-import { useRouter } from 'next/navigation';
+
+interface NotificationItem {
+    id: string;
+    title: string;
+    content: string | null;
+    created_at: string;
+}
+
+interface LunarCalendarData {
+    solar: {
+        fullDate: string;
+    };
+    lunar: {
+        day: number;
+        month: number;
+        year: number;
+        leap: number;
+        canChiDay: string;
+        canChiMonth: string;
+        canChiYear: string;
+    };
+    dayRating: {
+        level: 'Đại Cát' | 'Cát' | 'Bình' | 'Hung';
+        description: string;
+    };
+    truc: string;
+    goodHours: string[];
+    goodActivities: string[];
+    badActivities: string[];
+}
 
 interface HistoryItem {
     id: string;
@@ -34,20 +63,32 @@ interface HistoryItem {
 
 export default function DashboardPage() {
     const { profile } = useAuthStore();
-    const router = useRouter();
     const [histories, setHistories] = useState<HistoryItem[]>([]);
-    const [systemNotifs, setSystemNotifs] = useState<any[]>([]);
+    const [systemNotifs, setSystemNotifs] = useState<NotificationItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [upgradingTier, setUpgradingTier] = useState<string | null>(null);
+    const [lunarData, setLunarData] = useState<LunarCalendarData | null>(null);
 
     useEffect(() => {
         const loadAll = async () => {
-            await Promise.all([fetchHistory(), fetchNotifs()]);
+            await Promise.all([fetchHistory(), fetchNotifs(), fetchLunarCalendar()]);
             setIsLoading(false);
         };
         loadAll();
     }, []);
+
+    const fetchLunarCalendar = async () => {
+        try {
+            const res = await fetch('/api/lunar-calendar', { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                setLunarData(data);
+            }
+        } catch {
+            setLunarData(null);
+        }
+    };
 
     const fetchNotifs = async () => {
         try {
@@ -132,8 +173,8 @@ export default function DashboardPage() {
                             {/* Top row: Balance */}
                             <div className="flex items-end justify-between mb-3">
                                 <div className="flex items-baseline gap-1.5">
-                                    <span className={`font-bold text-foreground tracking-tight ${(profile as any)?.is_pro ? 'text-2xl md:text-3xl uppercase text-amber-500' : 'text-4xl md:text-5xl'}`}>
-                                        {(profile as any)?.is_pro ? 'Vô hạn' : (profile?.credits || 0)}
+                                    <span className={`font-bold text-foreground tracking-tight ${profile?.is_pro ? 'text-2xl md:text-3xl uppercase text-amber-500' : 'text-4xl md:text-5xl'}`}>
+                                        {profile?.is_pro ? 'Vô hạn' : (profile?.credits || 0)}
                                     </span>
                                     <span className="text-sm text-mystic-gold font-bold uppercase tracking-widest bg-mystic-gold/10 px-2 py-1 rounded-md">Xu</span>
                                 </div>
@@ -141,7 +182,7 @@ export default function DashboardPage() {
 
                             {/* Free Tier daily text */}
                             <p className="text-xs text-muted-foreground mb-4 font-medium px-1">
-                                {(profile as any)?.is_pro ? (
+                                {profile?.is_pro ? (
                                     <span>Bạn đang sử dụng gói <strong className="text-amber-500 font-bold uppercase">Gói Tháng (PRO)</strong></span>
                                 ) : profile?.is_premium ? (
                                     <span>Bạn đang sử dụng gói <strong className="text-mystic-gold font-bold">Gói Tuần (Premium)</strong></span>
@@ -152,7 +193,7 @@ export default function DashboardPage() {
 
                             {/* Bottom area: Premium CTA */}
                             <div className="mt-auto bg-gradient-to-br from-amber-500/10 to-transparent p-4 rounded-xl border border-amber-500/20 shadow-inner">
-                                {(profile as any)?.is_pro ? (
+                                {profile?.is_pro ? (
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
                                             <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
@@ -246,9 +287,18 @@ export default function DashboardPage() {
                                 </div>
                                 <div>
                                     <p className="font-semibold text-sm leading-tight text-foreground/90">
-                                        {new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        {lunarData?.solar.fullDate || new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                     </p>
-                                    <p className="text-xs font-medium text-mystic-gold mt-1 uppercase tracking-wider">Ngày Đại An Tốt Khảo</p>
+                                    <p className="text-xs font-medium text-mystic-gold mt-1 uppercase tracking-wider">
+                                        {lunarData
+                                            ? `${lunarData.dayRating.level} • Trực ${lunarData.truc}`
+                                            : 'Đang cập nhật lịch phương Đông'}
+                                    </p>
+                                    {lunarData && (
+                                        <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                                            Âm lịch {lunarData.lunar.day}/{lunarData.lunar.month}/{lunarData.lunar.year} • Ngày {lunarData.lunar.canChiDay}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -258,11 +308,26 @@ export default function DashboardPage() {
                                     Giờ Đẹp Hợp Với Bạn
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
-                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Tý (23-1)</Badge>
-                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Sửu (1-3)</Badge>
-                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Mão (5-7)</Badge>
-                                    <Badge variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">Ngọ (11-13)</Badge>
+                                    {(lunarData?.goodHours || []).slice(0, 6).map((hour) => (
+                                        <Badge key={hour} variant="outline" className="text-xs font-medium border-mystic-gold/30 bg-mystic-gold/10 text-mystic-gold py-1">
+                                            {hour}
+                                        </Badge>
+                                    ))}
+                                    {!lunarData && (
+                                        <span className="text-xs text-muted-foreground">Đang tải dữ liệu giờ hoàng đạo...</span>
+                                    )}
                                 </div>
+
+                                {lunarData && (
+                                    <div className="mt-3 grid grid-cols-1 gap-2 text-[11px]">
+                                        <p className="text-emerald-600/90">
+                                            <strong>Nên làm:</strong> {lunarData.goodActivities.join(', ')}
+                                        </p>
+                                        <p className="text-rose-600/90">
+                                            <strong>Nên tránh:</strong> {lunarData.badActivities.join(', ')}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

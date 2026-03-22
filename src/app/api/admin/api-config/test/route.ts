@@ -100,16 +100,21 @@ export async function POST(request: NextRequest) {
             } else {
                 message = 'Trình kiểm tra chưa hỗ trợ Custom provider';
             }
-        } catch (fetchErr: any) {
-            message = fetchErr.name === 'AbortError' ? 'Lỗi: Timeout không phản hồi' : `Lỗi mạng: ${fetchErr.message}`;
+        } catch (fetchErr: unknown) {
+            if (fetchErr instanceof Error) {
+                message = fetchErr.name === 'AbortError' ? 'Lỗi: Timeout không phản hồi' : `Lỗi mạng: ${fetchErr.message}`;
+            } else {
+                message = 'Lỗi mạng không xác định';
+            }
         } finally {
             clearTimeout(timeoutId);
         }
 
         return NextResponse.json({ success: isSuccess, message });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Test API error:', error);
-        return NextResponse.json({ error: error.message || 'Lỗi hệ thống' }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Lỗi hệ thống';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

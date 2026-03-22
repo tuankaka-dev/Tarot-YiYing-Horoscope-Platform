@@ -76,7 +76,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     signUp: async (email, password, fullName) => {
         const supabase = createClient();
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -84,28 +84,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             },
         });
         if (error) return { error: error.message };
-
-        // Create profile in our database BEFORE returning
-        if (data.user) {
-            try {
-                const profileResponse = await fetch('/api/profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: data.user.id,
-                        email,
-                        full_name: fullName,
-                    }),
-                });
-
-                if (!profileResponse.ok) {
-                    throw new Error('Failed to create profile: ' + profileResponse.status);
-                }
-            } catch (e) {
-                console.error('Profile creation error:', e);
-                return { error: 'Tạo tài khoản thành công nhưng thiết lập hồ sơ thất bại. Vui lòng liên hệ hỗ trợ.' };
-            }
-        }
 
         return {};
     },

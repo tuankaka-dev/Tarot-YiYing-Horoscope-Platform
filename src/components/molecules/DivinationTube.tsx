@@ -4,14 +4,31 @@ interface DivinationTubeProps {
     isShaking: boolean;
 }
 
+function normalizedFromSeed(seed: number): number {
+    const value = Math.sin(seed * 12.9898) * 43758.5453;
+    return value - Math.floor(value);
+}
+
+function pickRange(index: number, salt: number, min: number, max: number): number {
+    const n = normalizedFromSeed(index + salt);
+    return min + n * (max - min);
+}
+
 export function DivinationTube({ isShaking }: DivinationTubeProps) {
     // Bamboo sticks configuration
     const sticks = Array.from({ length: 12 }).map((_, i) => {
-        // Randomize height and rotation for a natural look
-        const height = 100 + Math.random() * 40; // 100px to 140px
-        const rotate = -15 + Math.random() * 30; // -15deg to 15deg
-        const left = 20 + Math.random() * 60; // 20% to 80%
-        return { height, rotate, left, id: i };
+        const height = pickRange(i, 11, 100, 140);
+        const rotate = pickRange(i, 29, -15, 15);
+        const left = pickRange(i, 47, 20, 80);
+        const shakeY = [
+            -pickRange(i, 61, 2, 10),
+            pickRange(i, 73, 2, 10),
+            -pickRange(i, 89, 6, 15),
+            pickRange(i, 97, 1, 6),
+            0,
+        ];
+        const delay = pickRange(i, 113, 0, 0.2);
+        return { height, rotate, left, id: i, shakeY, delay };
     });
 
     return (
@@ -33,7 +50,7 @@ export function DivinationTube({ isShaking }: DivinationTubeProps) {
 
                 {/* Bamboo Sticks sticking out */}
                 <div className="absolute top-0 left-0 w-full h-full -z-10">
-                    {sticks.map((stick, i) => (
+                    {sticks.map((stick) => (
                         <motion.div
                             key={stick.id}
                             className="absolute bottom-full w-2 rounded-t-sm origin-bottom"
@@ -46,10 +63,10 @@ export function DivinationTube({ isShaking }: DivinationTubeProps) {
                                 borderRight: '1px solid rgba(0,0,0,0.3)',
                             }}
                             animate={isShaking ? {
-                                y: [-Math.random() * 10, Math.random() * 10, -Math.random() * 15, Math.random() * 5, 0],
+                                y: stick.shakeY,
                                 rotate: [stick.rotate - 5, stick.rotate + 5, stick.rotate - 3, stick.rotate + 3, stick.rotate],
                             } : {}}
-                            transition={{ duration: 2.5, ease: "easeInOut", delay: Math.random() * 0.2 }}
+                            transition={{ duration: 2.5, ease: "easeInOut", delay: stick.delay }}
                         >
                             {/* Red tip on the stick */}
                             <div className="w-full h-2 bg-red-600/80 rounded-t-sm border-b border-black/20" />

@@ -144,7 +144,12 @@ export default function AdminUsersPage() {
         if (!packageDialogUser) return;
         setIsUpdatingPackage(true);
         try {
-            const data: Record<string, any> = {
+            const data: {
+                userId: string;
+                is_premium: boolean;
+                is_pro: boolean;
+                premium_until: string | null;
+            } = {
                 userId: packageDialogUser.id,
                 is_premium: selectedTier === 'premium',
                 is_pro: selectedTier === 'pro',

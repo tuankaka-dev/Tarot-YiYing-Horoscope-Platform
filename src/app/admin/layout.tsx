@@ -49,8 +49,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* Main content */}
-            <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
+                <div className="md:hidden sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur px-3 py-2">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        'shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors border',
+                                        isActive
+                                            ? 'bg-mystic-purple/20 text-mystic-purple border-mystic-purple/30'
+                                            : 'text-muted-foreground border-border/60 hover:text-foreground hover:bg-accent'
+                                    )}
+                                >
+                                    <item.icon className="w-3.5 h-3.5" />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="p-4 md:p-8">
                 {children}
+                </div>
             </div>
         </div>
     );

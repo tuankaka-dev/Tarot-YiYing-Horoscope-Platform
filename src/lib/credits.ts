@@ -29,7 +29,7 @@ export async function checkAndResetCredits(userId: string) {
     } = {};
 
     // Check if PRO has expired
-    if ((profile as any).is_pro && profile.premium_until && new Date(profile.premium_until) < now) {
+    if (profile.is_pro && profile.premium_until && new Date(profile.premium_until) < now) {
         updateData.is_pro = false;
         needsUpdate = true;
     }
@@ -41,7 +41,7 @@ export async function checkAndResetCredits(userId: string) {
     }
 
     // PRO users have unlimited credits, skip reset
-    const isProNow = updateData.is_pro !== undefined ? updateData.is_pro : (profile as any).is_pro;
+    const isProNow = updateData.is_pro !== undefined ? updateData.is_pro : profile.is_pro;
     if (isProNow) {
         if (needsUpdate) {
             const updated = await prisma.profile.update({

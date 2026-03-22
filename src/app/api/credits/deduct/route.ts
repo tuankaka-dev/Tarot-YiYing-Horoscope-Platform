@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { amount, reason } = body;
+        const { amount } = body;
 
         if (!amount || amount <= 0) {
             return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         });
 
         // PRO users have unlimited usage - skip deduction
-        if (profile && (profile as any).is_pro) {
+        if (profile && profile.is_pro) {
             return NextResponse.json({ 
                 success: true, 
                 credits: profile.credits,
