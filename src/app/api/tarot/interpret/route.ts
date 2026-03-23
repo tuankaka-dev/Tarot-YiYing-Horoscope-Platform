@@ -117,60 +117,138 @@ async function callGeminiAPI(
     config: { base_url: string; api_key: string; headers: unknown },
     prompt: string
 ): Promise<string> {
+    const url = `${config.base_url}/models/gemini-2.0-flash:generateContent?key=${config.api_key}`;
+
     const customHeaders = (config.headers && typeof config.headers === 'object')
         ? (config.headers as Record<string, string>)
         : {};
 
-    const response = await fetch(
-        `${config.base_url}/models/gemini-2.0-flash:generateContent?key=${config.api_key}`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...customHeaders,
-            },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.8,
-                    maxOutputTokens: 1600,
-                },
-            }),
-        }
-    );
+    const body = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 2048,
+        },
+    });
 
-    if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [5000, 15000, 30000];
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+        let response: Response;
+        try {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...customHeaders,
+                },
+                body,
+                signal: controller.signal,
+            });
+        } catch (fetchErr) {
+            if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+                throw new Error('API request timeout sau 25 giây');
+            }
+            throw fetchErr;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Không có phản hồi từ AI.';
+        }
+
+        const errBody = await response.text().catch(() => '');
+
+        if (response.status === 429 && attempt < MAX_RETRIES - 1) {
+            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS[attempt]));
+            continue;
+        }
+
+        if (response.status === 429) {
+            throw new Error('API Gemini đang quá tải (rate limit). Vui lòng đợi 1-2 phút và thử lại.');
+        }
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('API key không hợp lệ. Vui lòng kiểm tra cấu hình trong trang Quản Trị > Cấu Hình API.');
+        }
+
+        if (response.status === 404) {
+            throw new Error('Model AI không tồn tại. Vui lòng liên hệ admin.');
+        }
+
+        let detail = '';
+        try {
+            const errJson = JSON.parse(errBody);
+            detail = errJson?.error?.message || '';
+        } catch {
+            detail = errBody.substring(0, 200);
+        }
+
+        throw new Error(`Lỗi Gemini API (${response.status}): ${detail || 'Lỗi không xác định'}`);
     }
 
-    const data = await response.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    throw new Error('Đã hết số lần thử lại. Vui lòng thử lại sau 1-2 phút.');
 }
 
 async function callOpenAIAPI(
     config: { base_url: string; api_key: string; headers: unknown },
     prompt: string
 ): Promise<string> {
+    const url = `${config.base_url}/chat/completions`;
+
+    const lowerBaseUrl = config.base_url.toLowerCase();
+    const model = lowerBaseUrl.includes('deepseek')
+        ? 'deepseek-chat'
+        : lowerBaseUrl.includes('groq')
+          ? 'llama-3.1-70b-versatile'
+          : 'gpt-4';
+
     const customHeaders = (config.headers && typeof config.headers === 'object')
         ? (config.headers as Record<string, string>)
         : {};
 
-    const response = await fetch(`${config.base_url}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            temperature: 0.8,
-            messages: [{ role: 'user', content: prompt }],
-        }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response: Response;
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    { role: 'system', content: 'You are a wise master of the I Ching.' },
+                    { role: 'user', content: prompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 2048,
+            }),
+            signal: controller.signal,
+        });
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            throw new Error('API request timeout sau 25 giây.');
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+        const err = await response.text().catch(() => '');
+        const detail = err ? ` - ${err.substring(0, 200)}` : '';
+        throw new Error(`OpenAI API error: ${response.status}${detail}`);
     }
 
     const data = await response.json();
@@ -185,22 +263,46 @@ async function callCustomAPI(
         ? (config.headers as Record<string, string>)
         : {};
 
-    const response = await fetch(config.base_url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${config.api_key}`,
-            ...customHeaders,
-        },
-        body: JSON.stringify({ prompt }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+    let response: Response;
+    try {
+        response = await fetch(config.base_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.api_key}`,
+                ...customHeaders,
+            },
+            body: JSON.stringify({
+                prompt,
+                max_tokens: 2048,
+            }),
+            signal: controller.signal,
+        });
+    } catch (fetchErr) {
+        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+            throw new Error('API request timeout sau 25 giây');
+        }
+        throw fetchErr;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
         throw new Error(`Custom API error: ${response.status}`);
     }
 
     const data = await response.json();
-    return data?.text || data?.content || data?.response || '';
+    return (
+        data?.response ||
+        data?.text ||
+        data?.content ||
+        data?.choices?.[0]?.message?.content ||
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        JSON.stringify(data)
+    );
 }
 
 export async function POST(request: NextRequest) {
@@ -249,7 +351,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (reading.ai_response && reading.ai_response.trim().length > 0) {
-            return new Response(reading.ai_response, {
+            const cleanedCachedResponse = sanitizeInterpretationText(reading.ai_response);
+            return new Response(cleanedCachedResponse, {
                 headers: { 'Content-Type': 'text/plain; charset=utf-8' },
             });
         }
@@ -341,6 +444,10 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Tarot interpretation error:', error);
 
+        const errorMessage = error instanceof Error && error.message
+            ? error.message
+            : 'Không thể nhận thông điệp chuyên sâu lúc này.';
+
         if (shouldRefund) {
             try {
                 const supabase = await createClient();
@@ -359,6 +466,6 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return NextResponse.json({ error: 'Không thể nhận thông điệp chuyên sâu lúc này.' }, { status: 502 });
+        return NextResponse.json({ error: errorMessage }, { status: 502 });
     }
 }
