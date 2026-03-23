@@ -84,12 +84,16 @@ export function Navbar() {
 
                                 {/* Avatar Menu */}
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer focus:outline-none ring-2 ring-transparent transition-all hover:ring-mystic-gold/50 rounded-full md:pl-1 md:pr-4 py-1">
-                                        <Avatar className="h-9 w-9 border-2 border-mystic-gold/30">
+                                    <DropdownMenuTrigger className="flex items-center gap-2 cursor-pointer focus:outline-none ring-2 ring-transparent transition-all hover:ring-mystic-gold/50 rounded-full pl-2 pr-2 md:pl-1 md:pr-4 py-2 min-h-11">
+                                        <Avatar className="h-10 w-10 md:h-9 md:w-9 border-2 border-mystic-gold/30">
                                             <AvatarFallback className="bg-mystic-gold/10 text-mystic-gold font-semibold">
                                                 {(profile?.full_name || user.email || '?')[0].toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
+                                        <div className="md:hidden flex items-center gap-1 px-2.5 py-1 rounded-full bg-mystic-gold/10 border border-mystic-gold/20">
+                                            <Coins className="w-3.5 h-3.5 text-mystic-gold" />
+                                            <span className="text-xs font-bold text-mystic-gold leading-none">{profile?.credits || 0}</span>
+                                        </div>
                                         <span className="hidden md:block text-sm font-medium text-foreground/80 max-w-[120px] truncate">
                                             {profile?.full_name || 'Người dùng'}
                                         </span>

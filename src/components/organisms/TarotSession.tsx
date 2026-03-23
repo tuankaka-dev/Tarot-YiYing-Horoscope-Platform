@@ -341,8 +341,8 @@ export function TarotSession() {
                             >
                                 {isInterpreting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                                 <span className="flex items-center gap-2">
-                                    Nhận thông điệp chuyên sâu
-                                    <PriceTag isPro={profile?.is_pro} price={10} />
+                                    {isInterpreting ? 'Đang soạn thông điệp, hãy đợi 1 phút' : 'Nhận thông điệp chuyên sâu'}
+                                    {!isInterpreting && <PriceTag isPro={profile?.is_pro} price={10} />}
                                 </span>
                             </Button>
                         )}
