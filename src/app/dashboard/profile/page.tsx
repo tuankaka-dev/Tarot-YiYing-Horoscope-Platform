@@ -9,13 +9,41 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { User, Save, Loader2, Crown } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    DAY_OPTIONS,
+    MONTH_OPTIONS,
+    ZODIAC_BIRTH_HOURS,
+    buildIsoBirthDate,
+    splitBirthDate,
+    validateBirthDateParts,
+} from '@/lib/birth-info';
 
 export default function ProfilePage() {
     const { user, profile, fetchProfile } = useAuthStore();
     const [fullName, setFullName] = useState(profile?.full_name || '');
+    const [birthDay, setBirthDay] = useState('');
+    const [birthMonth, setBirthMonth] = useState('');
+    const [birthYear, setBirthYear] = useState('');
+    const [birthTime, setBirthTime] = useState(profile?.birth_time || '');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        setFullName(profile?.full_name || '');
+        const parts = splitBirthDate(profile?.birth_date);
+        setBirthDay(parts.day);
+        setBirthMonth(parts.month);
+        setBirthYear(parts.year);
+        setBirthTime(profile?.birth_time || '');
+    }, [profile]);
 
     useEffect(() => {
         // Handle payment redirects from PayOS
@@ -35,20 +63,38 @@ export default function ProfilePage() {
 
     const handleSave = async () => {
         if (!user) return;
+
+        const birthDateError = validateBirthDateParts({
+            day: birthDay,
+            month: birthMonth,
+            year: birthYear,
+        });
+        if (birthDateError) {
+            toast.error(birthDateError);
+            return;
+        }
+
+        const birthDateIso = buildIsoBirthDate({ day: birthDay, month: birthMonth, year: birthYear });
+
         setIsLoading(true);
 
         try {
             const res = await fetch('/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ full_name: fullName }),
+                body: JSON.stringify({
+                    full_name: fullName,
+                    birth_date: birthDateIso,
+                    birth_time: birthTime || null,
+                }),
             });
 
             if (res.ok) {
                 await fetchProfile();
                 toast.success('Cập nhật hồ sơ thành công');
             } else {
-                toast.error('Cập nhật thất bại');
+                const err = await res.json().catch(() => null);
+                toast.error(err?.error || 'Cập nhật thất bại');
             }
         } catch {
             toast.error('Đã xảy ra lỗi');
@@ -115,6 +161,68 @@ export default function ProfilePage() {
                             <Label>Email</Label>
                             <Input value={user?.email || ''} disabled className="bg-background/30 opacity-50" />
                             <p className="text-xs text-muted-foreground">Email không thể thay đổi</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Ngày sinh</Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <Select value={birthDay || null} onValueChange={(value) => setBirthDay(value ?? '')}>
+                                    <SelectTrigger className="w-full bg-background/50 border-mystic-purple/20 h-10">
+                                        <SelectValue placeholder="Ngày" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {DAY_OPTIONS.map((day) => (
+                                            <SelectItem key={day} value={day}>
+                                                {day}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={birthMonth || null} onValueChange={(value) => setBirthMonth(value ?? '')}>
+                                    <SelectTrigger className="w-full bg-background/50 border-mystic-purple/20 h-10">
+                                        <SelectValue placeholder="Tháng" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {MONTH_OPTIONS.map((month) => (
+                                            <SelectItem key={month} value={month}>
+                                                {month}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Input
+                                    value={birthYear}
+                                    onChange={(e) => setBirthYear(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                                    placeholder="Năm"
+                                    inputMode="numeric"
+                                    className="bg-background/50 border-mystic-purple/20 h-10"
+                                />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Chọn ngày, tháng và nhập năm sinh (VD: 2006)</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Giờ sinh (12 con giáp)</Label>
+                            <Select
+                                value={birthTime || null}
+                                onValueChange={(value) => setBirthTime(value ?? '')}
+                            >
+                                <SelectTrigger className="w-full bg-background/50 border-mystic-purple/20 h-10">
+                                    <SelectValue placeholder="Chọn giờ sinh" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ZODIAC_BIRTH_HOURS.map((item) => (
+                                        <SelectItem key={item.value} value={item.value}>
+                                            {item.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Có thể để trống nếu bạn chưa rõ giờ sinh.
+                            </p>
                         </div>
 
                         <Button

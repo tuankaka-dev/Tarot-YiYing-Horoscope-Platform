@@ -13,6 +13,8 @@ model Profile {
   role            String    @default("user") // "user" | "admin"
   full_name       String?
   avatar_url      String?
+  birth_date      DateTime? @db.Date
+  birth_time      String?
   is_banned       Boolean   @default(false)
   credits         Int       @default(10)
   is_premium      Boolean   @default(false)

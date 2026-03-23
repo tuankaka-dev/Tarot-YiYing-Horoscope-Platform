@@ -12,6 +12,8 @@ export interface Profile {
   role: UserRole;
   full_name: string | null;
   avatar_url: string | null;
+  birth_date: string | null;
+  birth_time: string | null;
   is_banned: boolean;
   credits: number;
   is_premium: boolean;
