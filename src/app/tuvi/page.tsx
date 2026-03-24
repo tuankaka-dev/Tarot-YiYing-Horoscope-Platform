@@ -102,7 +102,24 @@ const BRANCH_ELEMENT: Record<string, string> = {
     'Hợi': 'Thuỷ',
 };
 
-const BAD_STAR_KEYWORDS = ['Kình', 'Đà', 'Không', 'Kiếp', 'Kỵ', 'Hổ', 'Sát'];
+const GOOD_STAR_NAMES = new Set([
+    'Thiên Khôi', 'Thiên Việt', 'Tả Phù', 'Hữu Bật', 'Văn Xương', 'Văn Khúc',
+    'Long Trì', 'Phượng Các', 'Hoa Cái',
+    'Đào Hoa', 'Hồng Loan', 'Thiên Hỷ',
+    'Thiên Đức', 'Nguyệt Đức', 'Phúc Đức', 'Thiên Quan', 'Thiên Phúc',
+    'Hóa Lộc', 'Hóa Quyền', 'Hóa Khoa', 'Lộc Tồn',
+]);
+
+const BAD_STAR_NAMES = new Set([
+    'Kình Dương', 'Đà La', 'Địa Không', 'Địa Kiếp', 'Hỏa Tinh', 'Linh Tinh',
+    'Thiên Khốc', 'Thiên Hư', 'Đại Hao', 'Tiểu Hao', 'Tang Môn', 'Bạch Hổ',
+    'Hóa Kỵ', 'Thiên Hình', 'Thiên Diêu', 'Lưu Hà', 'Quả Tú', 'Thiên Thương',
+    'Điếu Khách', 'Thiên La', 'Tuế Phá', 'Quan Phủ', 'Quan Phù', 'Trực Phù',
+    'Tướng Quân', 'Thiên Sứ', 'Tử Phù', 'Phục Binh', 'Phá Toái', 'Bệnh Phù',
+    'Thái Tuế', 'Đầu Quân', 'Địa Võng', 'Phi Liêm', 'Cô Thần',
+]);
+
+const BAD_STAR_KEYWORDS = ['Kình', 'Đà', 'Không', 'Kiếp', 'Kỵ', 'Hổ', 'Sát', 'Khốc', 'Hư', 'Hao', 'Tang'];
 const PALACE_GRID_ORDER: Array<string | null> = [
     'Tỵ', 'Ngọ', 'Mùi', 'Thân',
     'Thìn', null, null, 'Dậu',
@@ -122,12 +139,158 @@ const ELEMENT_STYLE: Record<string, { text: string; border: string; bg: string }
     'Thổ': { text: 'text-amber-700', border: '', bg: '' },
 };
 
+type NguHanh = 'Kim' | 'Mộc' | 'Thuỷ' | 'Hoả' | 'Thổ';
+
+const MINOR_STAR_NGU_HANH: Record<string, NguHanh> = {
+    // Kim
+    'Văn Xương': 'Kim',
+    'Thiên Khôi': 'Kim',
+    'Thiên Việt': 'Kim',
+    'Kình Dương': 'Kim',
+    'Đà La': 'Kim',
+    'Thiên Hình': 'Kim',
+    'Tấu Thư': 'Kim',
+    'Đường Phù': 'Kim',
+    'Quốc Ấn': 'Kim',
+    'Tam Thai': 'Kim',
+    'Bát Tọa': 'Kim',
+    'Bạch Hổ': 'Kim',
+    'Quan Đới': 'Kim',
+    'Lâm Quan': 'Kim',
+    'Đế Vượng': 'Kim',
+
+    // Mộc
+    'Thiên Giải': 'Mộc',
+    'Địa Giải': 'Mộc',
+    'Giải Thần': 'Mộc',
+    'Thiên Quan': 'Mộc',
+    'Thiên Phúc': 'Mộc',
+    'Thiên Lương': 'Mộc',
+    'Thiên Thọ': 'Mộc',
+    'Tướng Quân': 'Mộc',
+    'Thiên Thương': 'Mộc',
+    'Thiên Sứ': 'Mộc',
+    'Dưỡng': 'Mộc',
+    'Phúc Đức': 'Mộc',
+    'Long Đức': 'Mộc',
+
+    // Thuy
+    'Văn Khúc': 'Thuỷ',
+    'Hữu Bật': 'Thuỷ',
+    'Long Trì': 'Thuỷ',
+    'Thanh Long': 'Thuỷ',
+    'Thiên Hỷ': 'Thuỷ',
+    'Hóa Kỵ': 'Thuỷ',
+    'Thiên Diêu': 'Thuỷ',
+    'Thiên Y': 'Thuỷ',
+    'Phá Toái': 'Thuỷ',
+    'Lưu Hà': 'Thuỷ',
+    'Thiên Khốc': 'Thuỷ',
+    'Thiên Hư': 'Thuỷ',
+    'Ân Quang': 'Thuỷ',
+    'Thiên Quý': 'Thuỷ',
+    'Bác Sĩ': 'Thuỷ',
+    'Trực Phù': 'Thuỷ',
+    'Mộc Dục': 'Thuỷ',
+    'Suy': 'Thuỷ',
+    'Tử': 'Thuỷ',
+    'Tuyệt': 'Thuỷ',
+
+    // Hoa
+    'Hỏa Tinh': 'Hoả',
+    'Linh Tinh': 'Hoả',
+    'Thiên Không': 'Hoả',
+    'Địa Không': 'Hoả',
+    'Địa Kiếp': 'Hoả',
+    'Thiên Mã': 'Hoả',
+    'Đào Hoa': 'Hoả',
+    'Hồng Loan': 'Hoả',
+    'Thái Tuế': 'Hoả',
+    'Lực Sĩ': 'Hoả',
+    'Tiểu Hao': 'Hoả',
+    'Đại Hao': 'Hoả',
+    'Phi Liêm': 'Hoả',
+    'Hỷ Thần': 'Hoả',
+    'Phục Binh': 'Hoả',
+    'Quan Phù': 'Hoả',
+    'Điếu Khách': 'Hoả',
+
+    // Tho
+    'Tả Phù': 'Thổ',
+    'Lộc Tồn': 'Thổ',
+    'Phượng Các': 'Thổ',
+    'Thai Phụ': 'Thổ',
+    'Phong Cáo': 'Thổ',
+    'Cô Thần': 'Thổ',
+    'Quả Tú': 'Thổ',
+    'Kiếp Sát': 'Thổ',
+    'Thiên La': 'Thổ',
+    'Địa Võng': 'Thổ',
+    'Đầu Quân': 'Thổ',
+    'Tang Môn': 'Thổ',
+    'Tử Phù': 'Thổ',
+    'Tuế Phá': 'Thổ',
+    'Bệnh Phù': 'Thổ',
+    'Quan Phủ': 'Thổ',
+    'Tràng Sinh': 'Thổ',
+    'Mộ': 'Thổ',
+    'Thai': 'Thổ',
+};
+
+const MAIN_STAR_NGU_HANH: Record<string, NguHanh> = {
+    // Hoả
+    'Liêm Trinh': 'Hoả',
+    'Thái Dương': 'Hoả',
+
+    // Thổ
+    'Tử Vi': 'Thổ',
+    'Thiên Phủ': 'Thổ',
+
+    // Kim
+    'Vũ Khúc': 'Kim',
+    'Thất Sát': 'Kim',
+
+    // Thuỷ
+    'Thiên Đồng': 'Thuỷ',
+    'Thiên Tướng': 'Thuỷ',
+    'Thái Âm': 'Thuỷ',
+    'Tham Lang': 'Thuỷ',
+    'Cự Môn': 'Thuỷ',
+    'Phá Quân': 'Thuỷ',
+
+    // Mộc
+    'Thiên Cơ': 'Mộc',
+    'Thiên Lương': 'Mộc',
+};
+
+function getMinorStarTextClass(starName: string, isBad: boolean): string {
+    const nguHanh = MINOR_STAR_NGU_HANH[starName];
+    if (nguHanh) {
+        return ELEMENT_STYLE[nguHanh].text;
+    }
+    return isBad ? 'text-slate-500' : 'text-slate-700';
+}
+
+function getMainStarTextClass(starName: string): string {
+    const nguHanh = MAIN_STAR_NGU_HANH[starName];
+    if (nguHanh) {
+        return ELEMENT_STYLE[nguHanh].text;
+    }
+    return 'text-slate-900';
+}
+
 function classifyMinorStars(stars: ChartStar[]) {
     const good: ChartStar[] = [];
     const bad: ChartStar[] = [];
 
     stars.forEach((star) => {
-        if (star.name.startsWith('Hóa ')) {
+        if (GOOD_STAR_NAMES.has(star.name)) {
+            good.push(star);
+            return;
+        }
+
+        if (BAD_STAR_NAMES.has(star.name)) {
+            bad.push(star);
             return;
         }
 
@@ -469,7 +632,7 @@ export default function TuViPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
                                     {mainStarPlacements.map((star) => (
                                         <div key={`${star.name}-${star.palace}`} className="rounded-md border border-mystic-gold/15 bg-white px-3 py-2">
-                                            <p className="font-semibold text-mystic-gold">{star.name}</p>
+                                            <p className={`font-semibold ${getMainStarTextClass(star.name)}`}>{star.name}</p>
                                             <p className="text-muted-foreground">
                                                 {star.branch} ({star.role}){star.brightness ? ` - ${star.brightness}` : ''}
                                             </p>
@@ -550,12 +713,7 @@ export default function TuViPage() {
                                         const ringStars = [thaiTueStar, locTonStar]
                                             .filter((name): name is string => Boolean(name))
                                             .map((name) => ({ name, palace: palace.index }));
-                                        const ringGood = ringStars.filter(
-                                            (star) => !BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword))
-                                        );
-                                        const ringBad = ringStars.filter(
-                                            (star) => BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword))
-                                        );
+                                        const { good: ringGood, bad: ringBad } = classifyMinorStars(ringStars);
                                         const elementStyle = ELEMENT_STYLE[element] ?? { text: 'text-slate-700', border: '', bg: '' };
 
                                     return (
@@ -579,7 +737,10 @@ export default function TuViPage() {
                                                         </div>
                                                         {palace.stars.main.length > 0 ? (
                                                             palace.stars.main.map((star) => (
-                                                                <p key={`${palace.index}-${star.name}`} className="text-[11px] font-semibold text-slate-900 leading-4">
+                                                                <p
+                                                                    key={`${palace.index}-${star.name}`}
+                                                                    className={`text-[11px] font-semibold leading-4 ${getMainStarTextClass(star.name)}`}
+                                                                >
                                                                     {star.name} {star.brightness ? `(${star.brightness[0]})` : ''}
                                                                 </p>
                                                             ))
@@ -601,7 +762,7 @@ export default function TuViPage() {
                                                         good.map((star) => (
                                                             <div
                                                                 key={`good-${palace.index}-${star.name}`}
-                                                                className="text-[11px] leading-4 text-slate-700"
+                                                                className={`text-[11px] leading-4 ${getMinorStarTextClass(star.name, false)}`}
                                                             >
                                                                 {star.name}
                                                             </div>
@@ -611,7 +772,7 @@ export default function TuViPage() {
                                                     )}
 
                                                     {ringGood.map((star, idx) => (
-                                                        <div key={`ring-good-${palace.index}-${star.name}-${idx}`} className="text-[11px] leading-4 text-slate-700">
+                                                        <div key={`ring-good-${palace.index}-${star.name}-${idx}`} className={`text-[11px] leading-4 ${getMinorStarTextClass(star.name, false)}`}>
                                                             {star.name}
                                                         </div>
                                                     ))}
@@ -621,7 +782,7 @@ export default function TuViPage() {
                                                         bad.map((star) => (
                                                             <div
                                                                 key={`bad-${palace.index}-${star.name}`}
-                                                                className="text-[11px] leading-4 text-slate-500 font-semibold"
+                                                                className={`text-[11px] leading-4 font-semibold ${getMinorStarTextClass(star.name, true)}`}
                                                             >
                                                                 {star.name}
                                                             </div>
@@ -631,7 +792,7 @@ export default function TuViPage() {
                                                     )}
 
                                                     {ringBad.map((star, idx) => (
-                                                        <div key={`ring-bad-${palace.index}-${star.name}-${idx}`} className="text-[11px] leading-4 text-slate-500 font-semibold">
+                                                        <div key={`ring-bad-${palace.index}-${star.name}-${idx}`} className={`text-[11px] leading-4 font-semibold ${getMinorStarTextClass(star.name, true)}`}>
                                                             {star.name}
                                                         </div>
                                                     ))}

@@ -2,8 +2,6 @@ type Gender = 'male' | 'female';
 type Direction = 'forward' | 'backward';
 type StrengthSymbol = 'M' | 'V' | 'Đ' | 'B' | 'H';
 
-import { Solar } from 'lunar-typescript';
-
 const BRANCHES = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'] as const;
 const STEMS = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'] as const;
 
@@ -117,6 +115,45 @@ const LUU_HA_BY_STEM: Record<number, number> = {
   9: 2,
 };
 
+const THIEN_PHUC_BY_STEM: Record<number, number> = {
+  0: 9,
+  1: 8,
+  2: 0,
+  3: 11,
+  4: 3,
+  5: 2,
+  6: 6,
+  7: 5,
+  8: 6,
+  9: 5,
+};
+
+const THIEN_TRU_BY_STEM: Record<number, number> = {
+  0: 5,
+  1: 6,
+  2: 0,
+  3: 5,
+  4: 6,
+  5: 8,
+  6: 2,
+  7: 3,
+  8: 9,
+  9: 11,
+};
+
+const VAN_TINH_BY_STEM: Record<number, number> = {
+  0: 5,
+  1: 6,
+  2: 8,
+  3: 9,
+  4: 8,
+  5: 9,
+  6: 11,
+  7: 0,
+  8: 2,
+  9: 3,
+};
+
 const HOA_CAI_BY_BRANCH: Record<number, number> = {
   0: 4,
   1: 1,
@@ -133,17 +170,17 @@ const HOA_CAI_BY_BRANCH: Record<number, number> = {
 };
 
 const KIEP_SAT_BY_BRANCH: Record<number, number> = {
-  0: 11,
+  0: 5,
   1: 2,
-  2: 5,
+  2: 11,
   3: 8,
-  4: 11,
+  4: 5,
   5: 2,
-  6: 5,
+  6: 11,
   7: 8,
-  8: 11,
+  8: 5,
   9: 2,
-  10: 5,
+  10: 11,
   11: 8,
 };
 
@@ -177,6 +214,81 @@ const QUA_TU_BY_BRANCH: Record<number, number> = {
   11: 10,
 };
 
+const PHA_TOAI_BY_BRANCH: Record<number, number> = {
+  0: 5,
+  1: 1,
+  2: 9,
+  3: 5,
+  4: 1,
+  5: 9,
+  6: 5,
+  7: 1,
+  8: 9,
+  9: 5,
+  10: 1,
+  11: 9,
+};
+
+const DAO_HOA_BY_BRANCH: Record<number, number> = {
+  0: 9,
+  1: 6,
+  2: 3,
+  3: 0,
+  4: 9,
+  5: 6,
+  6: 3,
+  7: 0,
+  8: 9,
+  9: 6,
+  10: 3,
+  11: 0,
+};
+
+const THIEN_MA_BY_BRANCH: Record<number, number> = {
+  0: 2,
+  1: 11,
+  2: 8,
+  3: 5,
+  4: 2,
+  5: 11,
+  6: 8,
+  7: 5,
+  8: 2,
+  9: 11,
+  10: 8,
+  11: 5,
+};
+
+const HOA_TINH_START_BY_BRANCH: Record<number, number> = {
+  0: 2,
+  1: 3,
+  2: 1,
+  3: 9,
+  4: 2,
+  5: 3,
+  6: 1,
+  7: 9,
+  8: 2,
+  9: 3,
+  10: 1,
+  11: 9,
+};
+
+const LINH_TINH_START_BY_BRANCH: Record<number, number> = {
+  0: 10,
+  1: 10,
+  2: 3,
+  3: 10,
+  4: 10,
+  5: 10,
+  6: 3,
+  7: 10,
+  8: 10,
+  9: 10,
+  10: 3,
+  11: 10,
+};
+
 const TU_HOA_BY_STEM: Record<number, Record<'Lộc' | 'Quyền' | 'Khoa' | 'Kỵ', string>> = {
   0: { Lộc: 'Liêm Trinh', Quyền: 'Phá Quân', Khoa: 'Vũ Khúc', Kỵ: 'Thái Dương' },
   1: { Lộc: 'Thiên Cơ', Quyền: 'Thiên Lương', Khoa: 'Tử Vi', Kỵ: 'Thái Âm' },
@@ -194,7 +306,7 @@ const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
 // Index:     0(Tý) 1(Sửu) 2(Dần) 3(Mão) 4(Thìn) 5(Tỵ) 6(Ngọ) 7(Mùi) 8(Thân) 9(Dậu) 10(Tuất) 11(Hợi)
   
   'Tử Vi':      ['B', 'B', 'M', 'B', 'V', 'M', 'M', 'B', 'M', 'B', 'V', 'B'],
-  'Liêm Trinh': ['V', 'H', 'V', 'H', 'M', 'H', 'V', 'H', 'V', 'H', 'M', 'H'],
+  'Liêm Trinh': ['V', 'H', 'V', 'H', 'M', 'H', 'V', 'Đ', 'V', 'H', 'M', 'H'],
   'Thiên Đồng': ['V', 'H', 'M', 'Đ', 'H', 'H', 'H', 'H', 'M', 'B', 'H', 'B'],
   'Vũ Khúc':    ['V', 'M', 'V', 'Đ', 'M', 'H', 'V', 'M', 'V', 'Đ', 'M', 'H'],
   'Thái Dương': ['H', 'H', 'V', 'V', 'V', 'M', 'M', 'Đ', 'H', 'H', 'H', 'H'],
@@ -205,7 +317,7 @@ const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
   'Cự Môn':     ['M', 'H', 'V', 'M', 'H', 'H', 'M', 'H', 'V', 'M', 'H', 'Đ'],
   'Thiên Tướng':['M', 'Đ', 'M', 'H', 'V', 'Đ', 'M', 'Đ', 'M', 'H', 'V', 'Đ'],
   'Thiên Lương':['V', 'Đ', 'M', 'V', 'M', 'H', 'M', 'Đ', 'M', 'H', 'M', 'H'],
-  'Thất Sát':   ['M', 'H', 'M', 'H', 'Đ', 'V', 'M', 'H', 'M', 'H', 'H', 'V'],
+  'Thất Sát':   ['M', 'H', 'M', 'H', 'Đ', 'V', 'M', 'Đ', 'M', 'H', 'H', 'V'],
   'Phá Quân':   ['M', 'V', 'H', 'H', 'V', 'H', 'M', 'V', 'Đ', 'H', 'V', 'H'],
 };
 const STRENGTH_LABEL: Record<StrengthSymbol, string> = {
@@ -315,41 +427,53 @@ export class TuViEngine {
     const autoHourChi = this.hourToBranchIndex(solar.hour, solar.minute);
     const hourChi = input.hourBranch ?? autoHourChi;
 
-    let lunarDateSource = { day: solar.day, month: solar.month, year: solar.year };
-    if (autoHourChi === 0 && solar.hour === 23) {
-      lunarDateSource = this.addSolarDays(solar.day, solar.month, solar.year, 1);
-    }
-
-    const lunar = this.convertSolarToLunarByApi(
-      lunarDateSource.day,
-      lunarDateSource.month,
-      lunarDateSource.year,
+    const lunarLegal = this.convertSolarToLunarByApi(
+      solar.day,
+      solar.month,
+      solar.year,
       solar.hour,
       solar.minute,
       timezone,
     );
 
-    const menh = this.normalizeIndex(2 + lunar.month - 1 - hourChi);
-    const than = this.normalizeIndex(2 + lunar.month - 1 + hourChi);
-    const palaceRoles = this.buildPalaceRolesFromMenh(menh);
-    const cuc = this.resolveCuc(lunar.yearStem, menh);
+    let chartDateSource = { day: solar.day, month: solar.month, year: solar.year };
+    if (autoHourChi === 0 && solar.hour === 23) {
+      chartDateSource = this.addSolarDays(solar.day, solar.month, solar.year, 1);
+    }
 
-    const majorStars = this.placeMainStars(lunar.day, cuc.value);
+    const lunarChart = this.convertSolarToLunarByApi(
+      chartDateSource.day,
+      chartDateSource.month,
+      chartDateSource.year,
+      solar.hour,
+      solar.minute,
+      timezone,
+    );
+
+    const menh = this.normalizeIndex(2 + lunarChart.month - 1 - hourChi);
+    const than = this.normalizeIndex(2 + lunarChart.month - 1 + hourChi);
+    const palaceRoles = this.buildPalaceRolesFromMenh(menh);
+    const cuc = this.resolveCuc(lunarChart.yearStem, menh);
+    const direction = this.resolveDirection(lunarChart.yearStem, input.gender);
+
+    const majorStars = this.placeMainStars(lunarChart.day, cuc.value);
 
     const minorStars = this.placeMinorStars({
       hourChi,
-      lunarMonth: lunar.month,
-      yearStem: lunar.yearStem,
-      yearChi: lunar.yearChi,
+      lunarDay: lunarChart.day,
+      lunarMonth: lunarChart.month,
+      yearStem: lunarChart.yearStem,
+      yearChi: lunarChart.yearChi,
+      menh,
       than,
+      direction,
     });
 
-    const direction = this.resolveDirection(lunar.yearStem, input.gender);
-    const cycles = this.buildCycles(lunar.yearChi, minorStars.locTon, cuc.value, direction);
-    const triet = TRIET_BY_STEM_GROUP[lunar.yearStem % 5];
-    const tuan = this.resolveTuan(lunar.yearStem, lunar.yearChi);
+    const cycles = this.buildCycles(lunarChart.yearChi, minorStars.locTon, cuc.value, direction);
+    const triet = TRIET_BY_STEM_GROUP[lunarChart.yearStem % 5];
+    const tuan = this.resolveTuan(lunarChart.yearStem, lunarChart.yearChi);
 
-    const tuHoa = this.resolveTuHoa(lunar.yearStem, majorStars, minorStars);
+    const tuHoa = this.resolveTuHoa(lunarChart.yearStem, majorStars, minorStars);
     const allMinorStars = [...minorStars.fixed, ...tuHoa];
 
     const palaces = BRANCHES.map((branch, idx) => {
@@ -391,15 +515,33 @@ export class TuViEngine {
       },
       preProcessing: {
         lunar: {
-          day: lunar.day,
-          month: lunar.month,
-          year: lunar.year,
-          yearStemIndex: lunar.yearStem,
-          yearStemName: STEMS[lunar.yearStem],
-          yearChiIndex: lunar.yearChi,
-          yearChiName: BRANCHES[lunar.yearChi],
+          day: lunarChart.day,
+          month: lunarChart.month,
+          year: lunarChart.year,
+          yearStemIndex: lunarChart.yearStem,
+          yearStemName: STEMS[lunarChart.yearStem],
+          yearChiIndex: lunarChart.yearChi,
+          yearChiName: BRANCHES[lunarChart.yearChi],
           hourChiIndex: hourChi,
           hourChiName: BRANCHES[hourChi],
+        },
+        lunarLegal: {
+          day: lunarLegal.day,
+          month: lunarLegal.month,
+          year: lunarLegal.year,
+          yearStemIndex: lunarLegal.yearStem,
+          yearStemName: STEMS[lunarLegal.yearStem],
+          yearChiIndex: lunarLegal.yearChi,
+          yearChiName: BRANCHES[lunarLegal.yearChi],
+        },
+        lunarChart: {
+          day: lunarChart.day,
+          month: lunarChart.month,
+          year: lunarChart.year,
+          yearStemIndex: lunarChart.yearStem,
+          yearStemName: STEMS[lunarChart.yearStem],
+          yearChiIndex: lunarChart.yearChi,
+          yearChiName: BRANCHES[lunarChart.yearChi],
         },
       },
       core: {
@@ -478,42 +620,106 @@ export class TuViEngine {
     return { tv, all };
   }
 
-  private placeMinorStars(input: { hourChi: number; lunarMonth: number; yearStem: number; yearChi: number; than: number }) {
-    const { hourChi, lunarMonth, yearStem, yearChi, than } = input;
+  private placeMinorStars(input: { hourChi: number; lunarDay: number; lunarMonth: number; yearStem: number; yearChi: number; menh: number; than: number; direction: Direction }) {
+    const { hourChi, lunarDay, lunarMonth, yearStem, yearChi, menh, than, direction } = input;
     const locTon = LOC_TON_BY_STEM[yearStem];
     const thienKhoi = THIEN_KHOI_BY_STEM[yearStem];
     const thienViet = THIEN_VIET_BY_STEM[yearStem];
     const thienQuan = THIEN_QUAN_BY_STEM[yearStem];
+    const thienPhuc = THIEN_PHUC_BY_STEM[yearStem];
+    const thienTru = THIEN_TRU_BY_STEM[yearStem];
+    const vanTinh = VAN_TINH_BY_STEM[yearStem];
     const luuHa = LUU_HA_BY_STEM[yearStem];
     const hoaCai = HOA_CAI_BY_BRANCH[yearChi];
     const kiepSat = KIEP_SAT_BY_BRANCH[yearChi];
     const coThan = CO_THAN_BY_BRANCH[yearChi];
     const quaTu = QUA_TU_BY_BRANCH[yearChi];
+    const phaToai = PHA_TOAI_BY_BRANCH[yearChi];
+    const daoHoa = DAO_HOA_BY_BRANCH[yearChi];
+    const thienMa = THIEN_MA_BY_BRANCH[yearChi];
+    const hoaTinhStart = HOA_TINH_START_BY_BRANCH[yearChi];
+    const linhTinhStart = LINH_TINH_START_BY_BRANCH[yearChi];
+    const vanXuong = this.normalizeIndex(10 - hourChi);
+    const vanKhuc = this.normalizeIndex(4 + hourChi);
+    const taPhu = this.normalizeIndex(4 + (lunarMonth - 1));
+    const huuBat = this.normalizeIndex(10 - (lunarMonth - 1));
+    const phuongCac = this.normalizeIndex(10 - yearChi);
+    const thienDieu = this.normalizeIndex(1 + lunarMonth - 1);
+    const thienY = this.normalizeIndex(1 + lunarMonth - 1);
+    const thienHinh = this.normalizeIndex(9 + lunarMonth - 1);
+    const diaGiai = this.normalizeIndex(7 + lunarMonth - 1);
+    const thaiPhu = this.normalizeIndex(vanXuong + lunarDay - 1);
+    const phongCao = this.normalizeIndex(vanKhuc + lunarDay - 3);
+    const thienTai = this.normalizeIndex(menh + yearChi);
+    const thienThuong = this.normalizeIndex(menh + 5);
+    const thienSu = this.normalizeIndex(menh + 7);
+    const dauQuan = this.normalizeIndex(yearChi - (lunarMonth - 1) + hourChi);
+    const hongLoan = this.normalizeIndex(3 - yearChi);
+    const thienKhong = this.normalizeIndex(yearChi + 1);
+    const nguyetGiai = this.normalizeIndex(8 + lunarMonth - 1);
+    const hoaTinh = direction === 'forward'
+      ? this.normalizeIndex(hoaTinhStart + hourChi)
+      : this.normalizeIndex(hoaTinhStart - hourChi);
+    const linhTinh = direction === 'forward'
+      ? this.normalizeIndex(linhTinhStart - hourChi)
+      : this.normalizeIndex(linhTinhStart + hourChi);
 
     const fixed: StarItem[] = [
-      { name: 'Văn Xương', palace: this.normalizeIndex(10 - hourChi) },
-      { name: 'Văn Khúc', palace: this.normalizeIndex(4 + hourChi) },
+      { name: 'Văn Xương', palace: vanXuong },
+      { name: 'Văn Khúc', palace: vanKhuc },
       { name: 'Địa Không', palace: this.normalizeIndex(11 - hourChi) },
       { name: 'Địa Kiếp', palace: this.normalizeIndex(11 + hourChi) },
-      { name: 'Tả Phù', palace: this.normalizeIndex(4 + (lunarMonth - 1)) },
-      { name: 'Hữu Bật', palace: this.normalizeIndex(10 - (lunarMonth - 1)) },
+      { name: 'Tả Phù', palace: taPhu },
+      { name: 'Hữu Bật', palace: huuBat },
       { name: 'Lộc Tồn', palace: locTon },
       { name: 'Kình Dương', palace: this.normalizeIndex(locTon + 1) },
       { name: 'Đà La', palace: this.normalizeIndex(locTon - 1) },
       { name: 'Thiên Khôi', palace: thienKhoi },
       { name: 'Thiên Việt', palace: thienViet },
       { name: 'Thiên Quan', palace: thienQuan },
+      { name: 'Thiên Phúc', palace: thienPhuc },
+      { name: 'Thiên Trù', palace: thienTru },
+      { name: 'Văn Tinh', palace: vanTinh },
       { name: 'Lưu Hà', palace: luuHa },
       { name: 'Quốc Ấn', palace: this.normalizeIndex(locTon + 8) },
       { name: 'Đường Phù', palace: this.normalizeIndex(locTon + 5) },
       { name: 'Long Trì', palace: this.normalizeIndex(4 + yearChi) },
-      { name: 'Phượng Các', palace: this.normalizeIndex(10 - yearChi) },
+      { name: 'Phượng Các', palace: phuongCac },
+      { name: 'Giải Thần', palace: phuongCac },
+      { name: 'Thiên Diêu', palace: thienDieu },
+      { name: 'Thiên Y', palace: thienY },
+      { name: 'Địa Giải', palace: diaGiai },
+      { name: 'Thiên Hình', palace: thienHinh },
+      { name: 'Thiên Khốc', palace: this.normalizeIndex(6 - yearChi) },
+      { name: 'Thiên Hư', palace: this.normalizeIndex(6 + yearChi) },
+      { name: 'Phá Toái', palace: phaToai },
+      { name: 'Thiên Đức', palace: this.normalizeIndex(9 + yearChi) },
+      { name: 'Nguyệt Đức', palace: this.normalizeIndex(5 + yearChi) },
+      { name: 'Đào Hoa', palace: daoHoa },
+      { name: 'Thiên Mã', palace: thienMa },
+      { name: 'Hỏa Tinh', palace: hoaTinh },
+      { name: 'Linh Tinh', palace: linhTinh },
       { name: 'Hoa Cái', palace: hoaCai },
       { name: 'Kiếp Sát', palace: kiepSat },
       { name: 'Cô Thần', palace: coThan },
       { name: 'Quả Tú', palace: quaTu },
       { name: 'Thiên Thọ', palace: this.normalizeIndex(than + yearChi) },
       { name: 'Thiên Hỉ', palace: this.normalizeIndex(9 - yearChi) },
+      { name: 'Hồng Loan', palace: hongLoan },
+      { name: 'Thiên Không', palace: thienKhong },
+      { name: 'Thiên Giải', palace: nguyetGiai },
+      { name: 'Ân Quang', palace: this.normalizeIndex(vanXuong + lunarDay - 2) },
+      { name: 'Thiên Quý', palace: this.normalizeIndex(vanKhuc - lunarDay + 2) },
+      { name: 'Tam Thai', palace: this.normalizeIndex(taPhu + lunarDay - 1) },
+      { name: 'Bát Tọa', palace: this.normalizeIndex(huuBat - lunarDay + 1) },
+      { name: 'Thai Phụ', palace: thaiPhu },
+      { name: 'Phong Cáo', palace: phongCao },
+      { name: 'Thiên Tài', palace: thienTai },
+      { name: 'Thiên Thương', palace: thienThuong },
+      { name: 'Thiên Sứ', palace: thienSu },
+      { name: 'Đầu Quân', palace: dauQuan },
+      { name: 'Thiên La', palace: 4 },
+      { name: 'Địa Võng', palace: 10 },
     ];
 
     return { locTon, fixed };
@@ -664,28 +870,158 @@ export class TuViEngine {
     return 11;
   }
 
-  private convertSolarToLunarByApi(dd: number, mm: number, yy: number, hour: number, minute: number, timeZone: number) {
-    const utcMs = Date.UTC(yy, mm - 1, dd, hour, minute, 0) - timeZone * 60 * 60 * 1000;
-    const tzDate = new Date(utcMs + timeZone * 60 * 60 * 1000);
-    const solar = Solar.fromYmdHms(
-      tzDate.getUTCFullYear(),
-      tzDate.getUTCMonth() + 1,
-      tzDate.getUTCDate(),
-      tzDate.getUTCHours(),
-      tzDate.getUTCMinutes(),
-      0,
-    );
+  // Ho Ngoc Duc Vietnamese lunar calendar algorithm.
+  private jdFromDate(dd: number, mm: number, yy: number): number {
+    const a = Math.floor((14 - mm) / 12);
+    const y = yy + 4800 - a;
+    const m = mm + 12 * a - 3;
+    let jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+    if (jd < 2299161) {
+      jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
+    }
+    return jd;
+  }
 
-    const lunar = solar.getLunar();
-    const lunarMonth = lunar.getMonth();
+  private getNewMoonDay(k: number, timeZone: number): number {
+    const t = k / 1236.85;
+    const t2 = t * t;
+    const t3 = t2 * t;
+    const dr = Math.PI / 180;
+
+    let jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * t2 - 0.000000155 * t3;
+    jd1 += 0.00033 * Math.sin((166.56 + 132.87 * t - 0.009173 * t2) * dr);
+
+    const m = 359.2242 + 29.10535608 * k - 0.0000333 * t2 - 0.00000347 * t3;
+    const mpr = 306.0253 + 385.81691806 * k + 0.0107306 * t2 + 0.00001236 * t3;
+    const f = 21.2964 + 390.67050646 * k - 0.0016528 * t2 - 0.00000239 * t3;
+
+    let c1 = (0.1734 - 0.000393 * t) * Math.sin(m * dr) + 0.0021 * Math.sin(2 * dr * m);
+    c1 -= 0.4068 * Math.sin(mpr * dr) + 0.0161 * Math.sin(dr * 2 * mpr);
+    c1 -= 0.0004 * Math.sin(dr * 3 * mpr);
+    c1 += 0.0104 * Math.sin(dr * 2 * f) - 0.0051 * Math.sin(dr * (m + mpr));
+    c1 -= 0.0074 * Math.sin(dr * (m - mpr)) + 0.0004 * Math.sin(dr * (2 * f + m));
+    c1 -= 0.0004 * Math.sin(dr * (2 * f - m)) - 0.0006 * Math.sin(dr * (2 * f + mpr));
+    c1 += 0.001 * Math.sin(dr * (2 * f - mpr)) + 0.0005 * Math.sin(dr * (2 * mpr + m));
+
+    const deltaT = t < -11
+      ? 0.001 + 0.000839 * t + 0.0002261 * t2 - 0.00000845 * t3 - 0.000000081 * t * t3
+      : -0.000278 + 0.000265 * t + 0.000262 * t2;
+
+    const jdNew = jd1 + c1 - deltaT;
+    return Math.floor(jdNew + 0.5 + timeZone / 24);
+  }
+
+  private getSunLongitude(dayNumber: number, timeZone: number): number {
+    const t = (dayNumber - 2451545.5 - timeZone / 24) / 36525;
+    const t2 = t * t;
+    const dr = Math.PI / 180;
+
+    const m = 357.52910 + 35999.05030 * t - 0.0001559 * t2 - 0.00000048 * t * t2;
+    const l0 = 280.46645 + 36000.76983 * t + 0.0003032 * t2;
+    let dl = (1.914600 - 0.004817 * t - 0.000014 * t2) * Math.sin(dr * m);
+    dl += (0.019993 - 0.000101 * t) * Math.sin(dr * 2 * m) + 0.000290 * Math.sin(dr * 3 * m);
+
+    let l = l0 + dl;
+    l = l * dr;
+    l -= Math.PI * 2 * Math.floor(l / (Math.PI * 2));
+
+    return Math.floor((l / Math.PI) * 6);
+  }
+
+  private getLunarMonth11(yy: number, timeZone: number): number {
+    const off = this.jdFromDate(31, 12, yy) - 2415021;
+    const k = Math.floor(off / 29.530588853);
+    let nm = this.getNewMoonDay(k, timeZone);
+    const sunLong = this.getSunLongitude(nm, timeZone);
+    if (sunLong >= 9) {
+      nm = this.getNewMoonDay(k - 1, timeZone);
+    }
+    return nm;
+  }
+
+  private getLeapMonthOffset(a11: number, timeZone: number): number {
+    const k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5);
+    let last = 0;
+    let i = 1;
+    let arc = this.getSunLongitude(this.getNewMoonDay(k + i, timeZone), timeZone);
+    do {
+      last = arc;
+      i += 1;
+      arc = this.getSunLongitude(this.getNewMoonDay(k + i, timeZone), timeZone);
+    } while (arc !== last && i < 14);
+    return i - 1;
+  }
+
+  private convertSolarToLunarHoNgocDuc(dd: number, mm: number, yy: number, timeZone: number): {
+    day: number;
+    month: number;
+    year: number;
+    leap: number;
+  } {
+    const dayNumber = this.jdFromDate(dd, mm, yy);
+    const k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
+    let monthStart = this.getNewMoonDay(k + 1, timeZone);
+    if (monthStart > dayNumber) {
+      monthStart = this.getNewMoonDay(k, timeZone);
+    }
+
+    let a11 = this.getLunarMonth11(yy, timeZone);
+    let b11 = a11;
+    let lunarYear: number;
+
+    if (a11 >= monthStart) {
+      lunarYear = yy;
+      a11 = this.getLunarMonth11(yy - 1, timeZone);
+    } else {
+      lunarYear = yy + 1;
+      b11 = this.getLunarMonth11(yy + 1, timeZone);
+    }
+
+    const lunarDay = dayNumber - monthStart + 1;
+    const diff = Math.floor((monthStart - a11) / 29);
+    let lunarMonth = diff + 11;
+    let lunarLeap = 0;
+
+    if (b11 - a11 > 365) {
+      const leapMonthDiff = this.getLeapMonthOffset(a11, timeZone);
+      if (diff >= leapMonthDiff) {
+        lunarMonth = diff + 10;
+        if (diff === leapMonthDiff) {
+          lunarLeap = 1;
+        }
+      }
+    }
+
+    if (lunarMonth > 12) {
+      lunarMonth -= 12;
+    }
+    if (lunarMonth >= 11 && diff < 4) {
+      lunarYear -= 1;
+    }
 
     return {
-      day: lunar.getDay(),
-      month: Math.abs(lunarMonth),
-      year: lunar.getYear(),
-      leap: lunarMonth < 0 ? 1 : 0,
-      yearStem: lunar.getYearGanIndex(),
-      yearChi: lunar.getYearZhiIndex(),
+      day: lunarDay,
+      month: lunarMonth,
+      year: lunarYear,
+      leap: lunarLeap,
+    };
+  }
+
+  private convertSolarToLunarByApi(dd: number, mm: number, yy: number, hour: number, minute: number, timeZone: number) {
+    void hour;
+    void minute;
+
+    const lunar = this.convertSolarToLunarHoNgocDuc(dd, mm, yy, timeZone);
+    const yearStem = ((lunar.year + 6) % 10 + 10) % 10;
+    const yearChi = ((lunar.year + 8) % 12 + 12) % 12;
+
+    return {
+      day: lunar.day,
+      month: lunar.month,
+      year: lunar.year,
+      leap: lunar.leap,
+      yearStem,
+      yearChi,
     };
   }
 
