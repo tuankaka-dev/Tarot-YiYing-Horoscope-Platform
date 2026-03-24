@@ -319,22 +319,6 @@ export default function TuViPage() {
     const [chartError, setChartError] = useState('');
     const [isChartLoading, setIsChartLoading] = useState(false);
 
-    const mainStarPlacements = useMemo(() => {
-        if (!chart?.palaces?.length) {
-            return [];
-        }
-
-        return chart.palaces
-            .flatMap((palace) =>
-                palace.stars.main.map((star) => ({
-                    ...star,
-                    branch: palace.branch,
-                    role: palace.role,
-                }))
-            )
-            .sort((a, b) => a.palace - b.palace || a.name.localeCompare(b.name, 'vi'));
-    }, [chart]);
-
     const palaceByBranch = useMemo(() => {
         const map = new Map<string, ChartPalace>();
         chart?.palaces.forEach((palace) => {
@@ -563,85 +547,6 @@ export default function TuViPage() {
 
                 {chart && (
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <Card className="border-mystic-gold/20">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">Mệnh</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-lg font-semibold text-mystic-gold">{chart.core.menhBranch}</p>
-                                    <p className="text-xs text-muted-foreground">Cung số {chart.core.menh}</p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-mystic-gold/20">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">Thân</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-lg font-semibold text-mystic-gold">{chart.core.thanBranch}</p>
-                                    <p className="text-xs text-muted-foreground">Cung số {chart.core.than}</p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-mystic-gold/20">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">Ngũ Hành Cục</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-lg font-semibold text-mystic-gold">{chart.core.cuc.name}</p>
-                                    <p className="text-xs text-muted-foreground">Giá trị: {chart.core.cuc.value}</p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-mystic-gold/20">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">Âm Lịch Dùng Để An Sao</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-lg font-semibold text-mystic-gold">
-                                        {chart.preProcessing.lunar.day}/{chart.preProcessing.lunar.month}/{chart.preProcessing.lunar.year}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {chart.preProcessing.lunar.yearStemName} {chart.preProcessing.lunar.yearChiName} - Giờ {chart.preProcessing.lunar.hourChiName}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        <Card className="border-mystic-gold/20">
-                            <CardHeader>
-                                <CardTitle className="text-base">Bản Đồ 12 Cung</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                                    {chart.palaces.map((palace) => (
-                                        <div key={`role-${palace.index}`} className="rounded-md border border-mystic-gold/15 bg-amber-50/40 px-3 py-2">
-                                            <span className="font-semibold">{palace.role}</span>: {palace.branch} (#{palace.index})
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-mystic-gold/20">
-                            <CardHeader>
-                                <CardTitle className="text-base">Vị Trí Chính Tinh</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                                    {mainStarPlacements.map((star) => (
-                                        <div key={`${star.name}-${star.palace}`} className="rounded-md border border-mystic-gold/15 bg-white px-3 py-2">
-                                            <p className={`font-semibold ${getMainStarTextClass(star.name)}`}>{star.name}</p>
-                                            <p className="text-muted-foreground">
-                                                {star.branch} ({star.role}){star.brightness ? ` - ${star.brightness}` : ''}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-
                         <div>
                             <h2 className="text-base font-semibold text-mystic-gold mb-3">Lá Số 12 Cung (Grid)</h2>
                             <div className="overflow-x-auto">
@@ -652,6 +557,8 @@ export default function TuViPage() {
                                         }
 
                                         if (cellIndex === CENTER_START_INDEX) {
+                                            const isYangStem = ['Giáp', 'Bính', 'Mậu', 'Canh', 'Nhâm'].includes(chart.preProcessing.lunar.yearStemName);
+                                            const amDuongGenderLabel = `${isYangStem ? 'Dương' : 'Âm'} ${gender === 'male' ? 'Nam' : 'Nữ'}`;
                                             return (
                                                 <div
                                                     key="center-info"
@@ -671,6 +578,7 @@ export default function TuViPage() {
                                                             {chart.preProcessing.lunar.day}/{chart.preProcessing.lunar.month}/{chart.preProcessing.lunar.year}
                                                         </p>
                                                         <p><span className="font-semibold">Giờ sinh:</span> {birthHourLabel}</p>
+                                                        <p><span className="font-semibold">Âm dương:</span> {amDuongGenderLabel}</p>
                                                         <p><span className="font-semibold">Mệnh:</span> {chart.core.menhBranch} | <span className="font-semibold">Thân:</span> {chart.core.thanBranch}</p>
                                                         <p><span className="font-semibold">Cục:</span> {chart.core.cuc.name} ({chart.core.cuc.value})</p>
                                                     </div>
