@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,6 +30,7 @@ import {
     splitBirthDate,
     validateBirthDateParts,
 } from '@/lib/birth-info';
+import { getStoredTuViGender, setStoredTuViGender, type TuViGender } from '@/lib/tuvi-gender';
 import { toast } from 'sonner';
 
 type ChartStar = {
@@ -120,6 +122,10 @@ function classifyMinorStars(stars: ChartStar[]) {
     const bad: ChartStar[] = [];
 
     stars.forEach((star) => {
+        if (star.name.startsWith('Hóa ')) {
+            return;
+        }
+
         const isBad = BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword));
         if (isBad) {
             bad.push(star);
@@ -132,6 +138,7 @@ function classifyMinorStars(stars: ChartStar[]) {
 }
 
 export default function TuViPage() {
+    const router = useRouter();
     const { user, profile, isLoading, fetchProfile } = useAuthStore();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [birthDay, setBirthDay] = useState('');
@@ -139,7 +146,7 @@ export default function TuViPage() {
     const [birthYear, setBirthYear] = useState('');
     const [birthTimeInput, setBirthTimeInput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [gender, setGender] = useState<'male' | 'female'>('male');
+    const [gender, setGender] = useState<TuViGender>('male');
     const [chart, setChart] = useState<TuViChart | null>(null);
     const [chartError, setChartError] = useState('');
     const [isChartLoading, setIsChartLoading] = useState(false);
@@ -205,6 +212,10 @@ export default function TuViPage() {
 
         return map;
     }, [chart]);
+
+    useEffect(() => {
+        setGender(getStoredTuViGender());
+    }, []);
 
     useEffect(() => {
         const parts = splitBirthDate(profile?.birth_date);
@@ -283,6 +294,8 @@ export default function TuViPage() {
         setIsSaving(true);
 
         try {
+            setStoredTuViGender(gender);
+
             const response = await fetch('/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -318,21 +331,12 @@ export default function TuViPage() {
                             Hệ thống đang lập lá số từ ngày sinh và giờ sinh đã lưu trong hồ sơ.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="space-y-1">
-                            <Label>Giới tính</Label>
-                            <Select value={gender} onValueChange={(value) => setGender((value as 'male' | 'female') ?? 'male')}>
-                                <SelectTrigger className="w-36 h-10">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="male">Nam</SelectItem>
-                                    <SelectItem value="female">Nữ</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Button className="h-10 mt-6" onClick={fetchChart} disabled={isChartLoading || isDialogOpen}>
+                    <div className="flex items-end gap-2">
+                        <Button className="h-10" onClick={fetchChart} disabled={isChartLoading || isDialogOpen}>
                             {isChartLoading ? 'Đang lập...' : 'Lập lại lá số'}
+                        </Button>
+                        <Button type="button" variant="outline" className="h-10" onClick={() => router.push('/dashboard/profile')}>
+                            Chỉnh sửa thông tin
                         </Button>
                     </div>
                 </div>
@@ -500,7 +504,6 @@ export default function TuViPage() {
                                         const isMenh = palace.index === chart.core.menh;
                                         const isThan = palace.index === chart.core.than;
                                         const { good, bad } = classifyMinorStars(palace.stars.minor);
-                                        const hoaStars = palace.stars.minor.filter((star) => star.name.startsWith('Hóa '));
                                         const element = BRANCH_ELEMENT[palace.branch] ?? '';
                                         const trangSinhLabel = trangSinhLabelByPalace.get(palace.index) ?? '';
                                         const elementStyle = ELEMENT_STYLE[element] ?? { text: 'text-slate-700', border: '', bg: '' };
@@ -508,7 +511,7 @@ export default function TuViPage() {
                                     return (
                                         <div
                                             key={`palace-${palace.index}-${branch}`}
-                                            className="cung-view rounded-lg border border-mystic-gold/25 bg-[#F1ECE3] shadow-sm overflow-hidden"
+                                            className="cung-view h-full rounded-lg border border-mystic-gold/25 bg-[#F1ECE3] shadow-sm overflow-hidden flex flex-col"
                                             id={`cung-${palace.index}`}
                                         >
                                             <div className="cung-top border-b border-mystic-gold/15 bg-amber-50/40 px-2 py-2">
@@ -542,11 +545,14 @@ export default function TuViPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="cung-middle grid grid-cols-2 gap-2 px-2 py-2 min-h-[110px]">
+                                            <div className="cung-middle grid grid-cols-2 gap-2 px-2 py-2 min-h-[110px] flex-1">
                                                 <div className="sao-tot space-y-1">
                                                     {good.length > 0 ? (
                                                         good.map((star) => (
-                                                            <div key={`good-${palace.index}-${star.name}`} className="text-[11px] leading-4 text-slate-700">
+                                                            <div
+                                                                key={`good-${palace.index}-${star.name}`}
+                                                                className="text-[11px] leading-4 text-slate-700"
+                                                            >
                                                                 {star.name}
                                                             </div>
                                                         ))
@@ -557,7 +563,10 @@ export default function TuViPage() {
                                                 <div className="sao-xau space-y-1">
                                                     {bad.length > 0 ? (
                                                         bad.map((star) => (
-                                                            <div key={`bad-${palace.index}-${star.name}`} className="text-[11px] leading-4 text-slate-500 font-semibold">
+                                                            <div
+                                                                key={`bad-${palace.index}-${star.name}`}
+                                                                className="text-[11px] leading-4 text-slate-500 font-semibold"
+                                                            >
                                                                 {star.name}
                                                             </div>
                                                         ))
@@ -567,24 +576,10 @@ export default function TuViPage() {
                                                 </div>
                                             </div>
 
-                                            {hoaStars.length > 0 && (
-                                                <div className="cung-middle-tu-hoa-phai border-t border-mystic-gold/10 bg-slate-50/70 px-2 py-1.5 space-y-0.5">
-                                                    {hoaStars.map((star) => (
-                                                        <p key={`hoa-${palace.index}-${star.name}`} className="text-[11px] italic leading-4 text-slate-700">
-                                                            {star.name}
-                                                        </p>
-                                                    ))}
-                                                </div>
-                                            )}
-
                                             <div className="cung-bottom border-t border-mystic-gold/15 bg-amber-50/30 px-2 py-1.5 flex items-center justify-between text-[11px] text-slate-600">
                                                 <span>ĐV.{palace.role.slice(0, 4).toUpperCase()}</span>
                                                 <span>{trangSinhLabel || palace.branch}</span>
                                                 <span>LN.{palace.role.slice(0, 4).toUpperCase()}</span>
-                                            </div>
-
-                                            <div className="khoi-tieu-han-bottom px-2 pb-1 text-[11px] text-center text-slate-500">
-                                                {palace.branch}
                                             </div>
                                         </div>
                                     );
@@ -659,6 +654,19 @@ export default function TuViPage() {
                                             {item.label}
                                         </SelectItem>
                                     ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Giới tính</Label>
+                            <Select value={gender} onValueChange={(value) => setGender((value as TuViGender) ?? 'male')}>
+                                <SelectTrigger className="w-full h-10">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">Nam</SelectItem>
+                                    <SelectItem value="female">Nữ</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

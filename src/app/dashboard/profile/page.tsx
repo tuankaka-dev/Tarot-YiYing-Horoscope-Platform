@@ -26,6 +26,7 @@ import {
     splitBirthDate,
     validateBirthDateParts,
 } from '@/lib/birth-info';
+import { getStoredTuViGender, setStoredTuViGender, type TuViGender } from '@/lib/tuvi-gender';
 
 export default function ProfilePage() {
     const { user, profile, fetchProfile } = useAuthStore();
@@ -34,7 +35,12 @@ export default function ProfilePage() {
     const [birthMonth, setBirthMonth] = useState('');
     const [birthYear, setBirthYear] = useState('');
     const [birthTime, setBirthTime] = useState(profile?.birth_time || '');
+    const [tuViGender, setTuViGender] = useState<TuViGender>('male');
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        setTuViGender(getStoredTuViGender());
+    }, []);
 
     useEffect(() => {
         setFullName(profile?.full_name || '');
@@ -90,6 +96,7 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
+                setStoredTuViGender(tuViGender);
                 await fetchProfile();
                 toast.success('Cập nhật hồ sơ thành công');
             } else {
@@ -222,6 +229,25 @@ export default function ProfilePage() {
                             </Select>
                             <p className="text-xs text-muted-foreground">
                                 Có thể để trống nếu bạn chưa rõ giờ sinh.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Giới tính để lập lá số</Label>
+                            <Select
+                                value={tuViGender}
+                                onValueChange={(value) => setTuViGender((value as TuViGender) ?? 'male')}
+                            >
+                                <SelectTrigger className="w-full bg-background/50 border-mystic-purple/20 h-10">
+                                    <SelectValue placeholder="Chọn giới tính" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="male">Nam</SelectItem>
+                                    <SelectItem value="female">Nữ</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                Dùng cho tính toán lá số Tử Vi.
                             </p>
                         </div>
 

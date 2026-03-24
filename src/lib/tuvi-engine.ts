@@ -79,20 +79,22 @@ const TU_HOA_BY_STEM: Record<number, Record<'Lộc' | 'Quyền' | 'Khoa' | 'Kỵ
 };
 
 const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
-  'Tử Vi':      ['B', 'B', 'M', 'B', 'V', 'Đ', 'M', 'B', 'M', 'B', 'V', 'Đ'],
-  'Liêm Trinh': ['V', 'H', 'M', 'H', 'M', 'H', 'V', 'H', 'M', 'H', 'M', 'H'], // Miếu tại Thìn (4), Tuất (10)
-  'Thiên Đồng': ['V', 'H', 'M', 'Đ', 'H', 'Đ', 'B', 'H', 'M', 'H', 'H', 'Đ'],
+// Index:     0(Tý) 1(Sửu) 2(Dần) 3(Mão) 4(Thìn) 5(Tỵ) 6(Ngọ) 7(Mùi) 8(Thân) 9(Dậu) 10(Tuất) 11(Hợi)
+  
+  'Tử Vi':      ['B', 'B', 'M', 'B', 'V', 'M', 'M', 'B', 'M', 'B', 'V', 'B'],
+  'Liêm Trinh': ['V', 'H', 'V', 'H', 'M', 'H', 'V', 'H', 'V', 'H', 'M', 'H'],
+  'Thiên Đồng': ['V', 'H', 'M', 'Đ', 'H', 'H', 'H', 'H', 'M', 'B', 'H', 'B'],
   'Vũ Khúc':    ['V', 'M', 'V', 'Đ', 'M', 'H', 'V', 'M', 'V', 'Đ', 'M', 'H'],
   'Thái Dương': ['H', 'H', 'V', 'V', 'V', 'M', 'M', 'Đ', 'H', 'H', 'H', 'H'],
-  'Thiên Cơ':   ['Đ', 'M', 'H', 'Đ', 'V', 'V', 'M', 'M', 'H', 'Đ', 'V', 'H'],
-  'Thiên Phủ':  ['M', 'B', 'M', 'Đ', 'V', 'V', 'M', 'V', 'M', 'Đ', 'V', 'M'], // Vượng tại Thìn (4), Tuất (10)
-  'Thái Âm':    ['M', 'M', 'H', 'H', 'H', 'H', 'H', 'H', 'Đ', 'V', 'V', 'M'],
+  'Thái Âm':    ['M', 'M', 'H', 'H', 'H', 'H', 'H', 'Đ', 'V', 'M', 'M', 'M'],
+  'Thiên Cơ':   ['H', 'Đ', 'H', 'M', 'M', 'V', 'V', 'Đ', 'H', 'M', 'M', 'H'],
+  'Thiên Phủ':  ['M', 'B', 'M', 'Đ', 'V', 'Đ', 'M', 'Đ', 'M', 'Đ', 'V', 'B'],
   'Tham Lang':  ['H', 'M', 'Đ', 'H', 'V', 'H', 'H', 'M', 'Đ', 'H', 'V', 'H'],
-  'Cự Môn':     ['V', 'H', 'V', 'M', 'H', 'H', 'V', 'H', 'Đ', 'M', 'H', 'Đ'],
-  'Thiên Tướng':['V', 'Đ', 'M', 'H', 'V', 'H', 'V', 'Đ', 'M', 'H', 'V', 'H'],
-  'Thiên Lương':['V', 'Đ', 'M', 'V', 'Đ', 'H', 'M', 'Đ', 'M', 'H', 'Đ', 'H'],
-  'Thất Sát':   ['M', 'H', 'M', 'H', 'H', 'V', 'M', 'H', 'M', 'H', 'H', 'V'], // Hãm tại Thìn (4), Tuất (10)
-  'Phá Quân':   ['M', 'Đ', 'H', 'H', 'V', 'H', 'M', 'Đ', 'H', 'H', 'V', 'H'], // Hãm tại Dần (2), Thân (8)
+  'Cự Môn':     ['M', 'H', 'V', 'M', 'H', 'H', 'M', 'H', 'V', 'M', 'H', 'Đ'],
+  'Thiên Tướng':['M', 'Đ', 'M', 'H', 'V', 'Đ', 'M', 'Đ', 'M', 'H', 'V', 'Đ'],
+  'Thiên Lương':['V', 'Đ', 'M', 'V', 'M', 'H', 'M', 'Đ', 'M', 'H', 'M', 'H'],
+  'Thất Sát':   ['M', 'H', 'M', 'H', 'Đ', 'V', 'M', 'H', 'M', 'H', 'H', 'V'],
+  'Phá Quân':   ['M', 'V', 'H', 'H', 'V', 'H', 'M', 'V', 'Đ', 'H', 'V', 'H'],
 };
 const STRENGTH_LABEL: Record<StrengthSymbol, string> = {
   M: 'Miếu',
