@@ -117,6 +117,66 @@ const LUU_HA_BY_STEM: Record<number, number> = {
   9: 2,
 };
 
+const HOA_CAI_BY_BRANCH: Record<number, number> = {
+  0: 4,
+  1: 1,
+  2: 10,
+  3: 7,
+  4: 4,
+  5: 1,
+  6: 10,
+  7: 7,
+  8: 4,
+  9: 1,
+  10: 10,
+  11: 7,
+};
+
+const KIEP_SAT_BY_BRANCH: Record<number, number> = {
+  0: 11,
+  1: 2,
+  2: 5,
+  3: 8,
+  4: 11,
+  5: 2,
+  6: 5,
+  7: 8,
+  8: 11,
+  9: 2,
+  10: 5,
+  11: 8,
+};
+
+const CO_THAN_BY_BRANCH: Record<number, number> = {
+  0: 2,
+  1: 2,
+  2: 5,
+  3: 5,
+  4: 5,
+  5: 8,
+  6: 8,
+  7: 8,
+  8: 11,
+  9: 11,
+  10: 11,
+  11: 2,
+};
+
+const QUA_TU_BY_BRANCH: Record<number, number> = {
+  0: 10,
+  1: 10,
+  2: 1,
+  3: 1,
+  4: 1,
+  5: 4,
+  6: 4,
+  7: 4,
+  8: 7,
+  9: 7,
+  10: 7,
+  11: 10,
+};
+
 const TU_HOA_BY_STEM: Record<number, Record<'Lộc' | 'Quyền' | 'Khoa' | 'Kỵ', string>> = {
   0: { Lộc: 'Liêm Trinh', Quyền: 'Phá Quân', Khoa: 'Vũ Khúc', Kỵ: 'Thái Dương' },
   1: { Lộc: 'Thiên Cơ', Quyền: 'Thiên Lương', Khoa: 'Tử Vi', Kỵ: 'Thái Âm' },
@@ -280,6 +340,8 @@ export class TuViEngine {
       hourChi,
       lunarMonth: lunar.month,
       yearStem: lunar.yearStem,
+      yearChi: lunar.yearChi,
+      than,
     });
 
     const direction = this.resolveDirection(lunar.yearStem, input.gender);
@@ -416,13 +478,17 @@ export class TuViEngine {
     return { tv, all };
   }
 
-  private placeMinorStars(input: { hourChi: number; lunarMonth: number; yearStem: number }) {
-    const { hourChi, lunarMonth, yearStem } = input;
+  private placeMinorStars(input: { hourChi: number; lunarMonth: number; yearStem: number; yearChi: number; than: number }) {
+    const { hourChi, lunarMonth, yearStem, yearChi, than } = input;
     const locTon = LOC_TON_BY_STEM[yearStem];
     const thienKhoi = THIEN_KHOI_BY_STEM[yearStem];
     const thienViet = THIEN_VIET_BY_STEM[yearStem];
     const thienQuan = THIEN_QUAN_BY_STEM[yearStem];
     const luuHa = LUU_HA_BY_STEM[yearStem];
+    const hoaCai = HOA_CAI_BY_BRANCH[yearChi];
+    const kiepSat = KIEP_SAT_BY_BRANCH[yearChi];
+    const coThan = CO_THAN_BY_BRANCH[yearChi];
+    const quaTu = QUA_TU_BY_BRANCH[yearChi];
 
     const fixed: StarItem[] = [
       { name: 'Văn Xương', palace: this.normalizeIndex(10 - hourChi) },
@@ -440,6 +506,14 @@ export class TuViEngine {
       { name: 'Lưu Hà', palace: luuHa },
       { name: 'Quốc Ấn', palace: this.normalizeIndex(locTon + 8) },
       { name: 'Đường Phù', palace: this.normalizeIndex(locTon + 5) },
+      { name: 'Long Trì', palace: this.normalizeIndex(4 + yearChi) },
+      { name: 'Phượng Các', palace: this.normalizeIndex(10 - yearChi) },
+      { name: 'Hoa Cái', palace: hoaCai },
+      { name: 'Kiếp Sát', palace: kiepSat },
+      { name: 'Cô Thần', palace: coThan },
+      { name: 'Quả Tú', palace: quaTu },
+      { name: 'Thiên Thọ', palace: this.normalizeIndex(than + yearChi) },
+      { name: 'Thiên Hỉ', palace: this.normalizeIndex(9 - yearChi) },
     ];
 
     return { locTon, fixed };
