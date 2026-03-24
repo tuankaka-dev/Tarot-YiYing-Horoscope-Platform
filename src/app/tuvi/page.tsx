@@ -79,6 +79,9 @@ type TuViChart = {
         };
     };
     cycles?: {
+        direction?: 'forward' | 'backward';
+        thaiTueRing?: number[];
+        locTonRing?: number[];
         trangSinhRing?: number[];
     };
     palaces: ChartPalace[];
@@ -107,6 +110,8 @@ const PALACE_GRID_ORDER: Array<string | null> = [
     'Dần', 'Sửu', 'Tý', 'Hợi',
 ];
 const TRANG_SINH_LABELS = ['Tràng Sinh', 'Mộc Dục', 'Quan Đới', 'Lâm Quan', 'Đế Vượng', 'Suy', 'Bệnh', 'Tử', 'Mộ', 'Tuyệt', 'Thai', 'Dưỡng'];
+const THAI_TUE_RING_STARS = ['Thái Tuế', 'Thiếu Dương', 'Tang Môn', 'Thiếu Âm', 'Quan Phù', 'Tử Phù', 'Tuế Phá', 'Long Đức', 'Bạch Hổ', 'Phúc Đức', 'Điếu Khách', 'Trực Phù'];
+const LOC_TON_RING_STARS = ['Bác Sĩ', 'Lực Sĩ', 'Thanh Long', 'Tiểu Hao', 'Tướng Quân', 'Tấu Thư', 'Phi Liêm', 'Hỷ Thần', 'Bệnh Phù', 'Đại Hao', 'Phục Binh', 'Quan Phủ'];
 const CENTER_START_INDEX = 5;
 const CENTER_SKIP_INDEXES = new Set([6, 9, 10]);
 const ELEMENT_STYLE: Record<string, { text: string; border: string; bg: string }> = {
@@ -205,6 +210,40 @@ export default function TuViPage() {
 
         ring.forEach((palaceIndex, stageIndex) => {
             const label = TRANG_SINH_LABELS[stageIndex] ?? '';
+            if (label) {
+                map.set(palaceIndex, label);
+            }
+        });
+
+        return map;
+    }, [chart]);
+
+    const thaiTueLabelByPalace = useMemo(() => {
+        const map = new Map<number, string>();
+        const ring = chart?.cycles?.thaiTueRing;
+        if (!ring || ring.length !== 12) {
+            return map;
+        }
+
+        ring.forEach((palaceIndex, stageIndex) => {
+            const label = THAI_TUE_RING_STARS[stageIndex] ?? '';
+            if (label) {
+                map.set(palaceIndex, label);
+            }
+        });
+
+        return map;
+    }, [chart]);
+
+    const locTonLabelByPalace = useMemo(() => {
+        const map = new Map<number, string>();
+        const ring = chart?.cycles?.locTonRing;
+        if (!ring || ring.length !== 12) {
+            return map;
+        }
+
+        ring.forEach((palaceIndex, stageIndex) => {
+            const label = LOC_TON_RING_STARS[stageIndex] ?? '';
             if (label) {
                 map.set(palaceIndex, label);
             }
@@ -506,6 +545,17 @@ export default function TuViPage() {
                                         const { good, bad } = classifyMinorStars(palace.stars.minor);
                                         const element = BRANCH_ELEMENT[palace.branch] ?? '';
                                         const trangSinhLabel = trangSinhLabelByPalace.get(palace.index) ?? '';
+                                        const thaiTueStar = thaiTueLabelByPalace.get(palace.index) ?? '';
+                                        const locTonStar = locTonLabelByPalace.get(palace.index) ?? '';
+                                        const ringStars = [thaiTueStar, locTonStar]
+                                            .filter((name): name is string => Boolean(name))
+                                            .map((name) => ({ name, palace: palace.index }));
+                                        const ringGood = ringStars.filter(
+                                            (star) => !BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword))
+                                        );
+                                        const ringBad = ringStars.filter(
+                                            (star) => BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword))
+                                        );
                                         const elementStyle = ELEMENT_STYLE[element] ?? { text: 'text-slate-700', border: '', bg: '' };
 
                                     return (
@@ -559,6 +609,12 @@ export default function TuViPage() {
                                                     ) : (
                                                         <div className="text-[11px] leading-4 text-slate-300">.</div>
                                                     )}
+
+                                                    {ringGood.map((star, idx) => (
+                                                        <div key={`ring-good-${palace.index}-${star.name}-${idx}`} className="text-[11px] leading-4 text-slate-700">
+                                                            {star.name}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                                 <div className="sao-xau space-y-1">
                                                     {bad.length > 0 ? (
@@ -573,6 +629,12 @@ export default function TuViPage() {
                                                     ) : (
                                                         <div className="text-[11px] leading-4 text-slate-300">.</div>
                                                     )}
+
+                                                    {ringBad.map((star, idx) => (
+                                                        <div key={`ring-bad-${palace.index}-${star.name}-${idx}`} className="text-[11px] leading-4 text-slate-500 font-semibold">
+                                                            {star.name}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
 

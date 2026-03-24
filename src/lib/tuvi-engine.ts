@@ -65,6 +65,58 @@ const LOC_TON_BY_STEM: Record<number, number> = {
   9: 0,
 };
 
+const THIEN_KHOI_BY_STEM: Record<number, number> = {
+  0: 1,
+  1: 0,
+  2: 11,
+  3: 11,
+  4: 1,
+  5: 0,
+  6: 6,
+  7: 6,
+  8: 3,
+  9: 3,
+};
+
+const THIEN_VIET_BY_STEM: Record<number, number> = {
+  0: 7,
+  1: 8,
+  2: 9,
+  3: 9,
+  4: 7,
+  5: 8,
+  6: 2,
+  7: 2,
+  8: 5,
+  9: 5,
+};
+
+const THIEN_QUAN_BY_STEM: Record<number, number> = {
+  0: 7,
+  1: 4,
+  2: 5,
+  3: 2,
+  4: 3,
+  5: 9,
+  6: 11,
+  7: 9,
+  8: 10,
+  9: 6,
+};
+
+const LUU_HA_BY_STEM: Record<number, number> = {
+  0: 9,
+  1: 10,
+  2: 7,
+  3: 8,
+  4: 5,
+  5: 6,
+  6: 8,
+  7: 3,
+  8: 11,
+  9: 2,
+};
+
 const TU_HOA_BY_STEM: Record<number, Record<'Lộc' | 'Quyền' | 'Khoa' | 'Kỵ', string>> = {
   0: { Lộc: 'Liêm Trinh', Quyền: 'Phá Quân', Khoa: 'Vũ Khúc', Kỵ: 'Thái Dương' },
   1: { Lộc: 'Thiên Cơ', Quyền: 'Thiên Lương', Khoa: 'Tử Vi', Kỵ: 'Thái Âm' },
@@ -367,6 +419,10 @@ export class TuViEngine {
   private placeMinorStars(input: { hourChi: number; lunarMonth: number; yearStem: number }) {
     const { hourChi, lunarMonth, yearStem } = input;
     const locTon = LOC_TON_BY_STEM[yearStem];
+    const thienKhoi = THIEN_KHOI_BY_STEM[yearStem];
+    const thienViet = THIEN_VIET_BY_STEM[yearStem];
+    const thienQuan = THIEN_QUAN_BY_STEM[yearStem];
+    const luuHa = LUU_HA_BY_STEM[yearStem];
 
     const fixed: StarItem[] = [
       { name: 'Văn Xương', palace: this.normalizeIndex(10 - hourChi) },
@@ -378,6 +434,12 @@ export class TuViEngine {
       { name: 'Lộc Tồn', palace: locTon },
       { name: 'Kình Dương', palace: this.normalizeIndex(locTon + 1) },
       { name: 'Đà La', palace: this.normalizeIndex(locTon - 1) },
+      { name: 'Thiên Khôi', palace: thienKhoi },
+      { name: 'Thiên Việt', palace: thienViet },
+      { name: 'Thiên Quan', palace: thienQuan },
+      { name: 'Lưu Hà', palace: luuHa },
+      { name: 'Quốc Ấn', palace: this.normalizeIndex(locTon + 8) },
+      { name: 'Đường Phù', palace: this.normalizeIndex(locTon + 5) },
     ];
 
     return { locTon, fixed };
