@@ -26,6 +26,12 @@ export const ZODIAC_BIRTH_HOUR_VALUES = new Set(
   ZODIAC_BIRTH_HOURS.map((item) => item.value)
 );
 
+export type ZodiacBirthHourValue = (typeof ZODIAC_BIRTH_HOURS)[number]['value'];
+
+export function isZodiacBirthHourValue(value: string): value is ZodiacBirthHourValue {
+  return ZODIAC_BIRTH_HOUR_VALUES.has(value as ZodiacBirthHourValue);
+}
+
 function isValidDateParts(day: number, month: number, year: number): boolean {
   if (!Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) {
     return false;

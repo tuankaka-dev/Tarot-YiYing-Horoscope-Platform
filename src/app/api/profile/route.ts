@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { checkAndResetCredits } from '@/lib/credits';
 import {
     formatBirthDateForClient,
+    isZodiacBirthHourValue,
     parseBirthDateInput,
-    ZODIAC_BIRTH_HOUR_VALUES,
+    type ZodiacBirthHourValue,
 } from '@/lib/birth-info';
 
 function parseBirthDate(value: unknown): { hasValue: boolean; value: Date | null } {
@@ -17,7 +18,7 @@ function parseBirthDate(value: unknown): { hasValue: boolean; value: Date | null
     return { hasValue: true, value: parsed };
 }
 
-function parseBirthTime(value: unknown): { hasValue: boolean; value: string | null } {
+function parseBirthTime(value: unknown): { hasValue: boolean; value: ZodiacBirthHourValue | null } {
     if (value === undefined) {
         return { hasValue: false, value: null };
     }
@@ -26,7 +27,7 @@ function parseBirthTime(value: unknown): { hasValue: boolean; value: string | nu
         return { hasValue: true, value: null };
     }
 
-    if (typeof value !== 'string' || !ZODIAC_BIRTH_HOUR_VALUES.has(value)) {
+    if (typeof value !== 'string' || !isZodiacBirthHourValue(value)) {
         throw new Error('INVALID_BIRTH_TIME');
     }
 
