@@ -6,7 +6,9 @@ import { useAuthStore } from '@/stores/auth-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PriceTag } from '@/components/atoms/PriceTag';
 import {
     Dialog,
     DialogContent,
@@ -334,6 +336,38 @@ const MAIN_STAR_NGU_HANH: Record<string, NguHanh> = {
     'Thiên Lương': 'Mộc',
 };
 
+type TamHopGroupId = 'menh-tai-quan' | 'phuc-phoi-di' | 'phu-no-tat' | 'dien-tu-huynh';
+
+const TAM_HOP_GROUPS: Array<{ id: TamHopGroupId; label: string; roles: [string, string, string] }> = [
+    { id: 'menh-tai-quan', label: 'Tam Hợp Mệnh - Tài - Quan', roles: ['Mệnh', 'Tài Bạch', 'Quan Lộc'] },
+    { id: 'phuc-phoi-di', label: 'Tam Hợp Phúc - Phối - Di', roles: ['Phúc Đức', 'Phu Thê', 'Thiên Di'] },
+    { id: 'phu-no-tat', label: 'Tam Hợp Phụ - Nô - Tật', roles: ['Phụ Mẫu', 'Nô Bộc', 'Tật Ách'] },
+    { id: 'dien-tu-huynh', label: 'Tam Hợp Điền - Tử - Huynh', roles: ['Điền Trạch', 'Tử Tức', 'Huynh Đệ'] },
+];
+
+const TAM_HOP_INTERPRETATION_DB: Record<TamHopGroupId, { overview: string; focus: string; note: string }> = {
+    'menh-tai-quan': {
+        overview: 'Bộ Mệnh - Tài - Quan phản ánh trục bản thân, năng lực kiếm tiền và con đường công danh của đương số.',
+        focus: 'Nếu chính tinh sáng và cát tinh nhiều, trục này thường cho thấy năng lực tự thân mạnh, tài chính đi cùng sự nghiệp.',
+        note: 'Nên đọc đồng thời cả ba cung để tránh luận thiên lệch một điểm.',
+    },
+    'phuc-phoi-di': {
+        overview: 'Bộ Phúc - Phối - Di cho thấy nền phúc phần, cách gắn kết hôn nhân và năng lực thích nghi với môi trường xã hội.',
+        focus: 'Cát tinh tại đây thường giúp quan hệ hài hòa, ra ngoài gặp trợ lực; sát tinh nhiều báo hiệu cần mềm dẻo trong giao tiếp.',
+        note: 'Khi luận hôn nhân, nên xem phối hợp Phu Thê với Phúc Đức trước rồi mới kết luận.',
+    },
+    'phu-no-tat': {
+        overview: 'Bộ Phụ - Nô - Tật phản ánh hậu thuẫn gia đình, vòng cộng sự và nền tảng sức khỏe thể chất tinh thần.',
+        focus: 'Sao tốt tại Nô Bộc và Tật Ách giúp giảm áp lực đường đời, tăng khả năng bền bỉ khi làm việc dài hạn.',
+        note: 'Đây là bộ cung nên theo dõi theo đại vận để chủ động phòng ngừa hơn là đợi vấn đề xuất hiện.',
+    },
+    'dien-tu-huynh': {
+        overview: 'Bộ Điền - Tử - Huynh thể hiện nền tảng gia cư, hậu vận con cái và cách phối hợp trong nội tộc anh em.',
+        focus: 'Cung Điền sáng thường giúp ổn định chỗ ở; cung Tử và Huynh hài hòa tăng khả năng giữ nhịp gia đạo lâu dài.',
+        note: 'Nên luận theo hướng cân bằng trách nhiệm gia đình và mục tiêu cá nhân.',
+    },
+};
+
 function getMinorStarTextClass(starName: string, isBad: boolean): string {
     const normalizedName = normalizeMinorStarName(starName);
     const nguHanh = MINOR_STAR_NGU_HANH[normalizedName] ?? MINOR_STAR_NGU_HANH[starName];
@@ -470,6 +504,9 @@ export default function TuViPage() {
     const [chartError, setChartError] = useState('');
     const [isChartLoading, setIsChartLoading] = useState(false);
     const [viewYear, setViewYear] = useState(String(initialViewYear));
+    const [deepQuestion, setDeepQuestion] = useState('');
+    const [deepAnswer, setDeepAnswer] = useState('');
+    const [isDeepLoading, setIsDeepLoading] = useState(false);
 
     const palaceByBranch = useMemo(() => {
         const map = new Map<string, ChartPalace>();
@@ -648,6 +685,103 @@ export default function TuViPage() {
         return new Set(palaces);
     }, [chart]);
 
+    const fullTextReport = useMemo(() => {
+        if (!chart) {
+            return '';
+        }
+
+        const coreInfo = [
+            `Lá số được lập cho ${profile?.full_name || profile?.email || 'đương số'} với dương lịch ${solarBirthText}, âm lịch ${chart.preProcessing.lunar.day}/${chart.preProcessing.lunar.month}/${chart.preProcessing.lunar.year}, giờ ${birthHourLabel}.`,
+            `Năm xem ${effectiveViewYear}. Mệnh an tại cung ${chart.core.menhBranch}, Thân an tại cung ${chart.core.thanBranch}.`,
+            `Cục: ${chart.core.cuc.name} (${chart.core.cuc.value}). Bản mệnh: ${chart.core.banMenh?.napAm ? `${chart.core.banMenh.napAm} (${chart.core.banMenh.yNghia ?? chart.core.banMenh.element})` : '-'}.`,
+            `Chủ Mệnh: ${chart.core.chuMenh || '-'}; Chủ Thân: ${chart.core.chuThan || '-'}; Lai nhân cung: ${chart.core.laiNhanCung?.roles?.join(' / ') || '-'}.`,
+            `Cân lượng: ${chart.core.canLuong ? `${chart.core.canLuong.luong} lượng ${chart.core.canLuong.chi} chỉ` : '-'}.`,
+            `Chiều vận hành đại vận: ${chart.cycles?.direction === 'forward' ? 'Thuận' : 'Nghịch'}. Tuần/Triệt: ${chart.voidsAndStrength?.tuan?.branches?.join(', ') || '-'} / ${chart.voidsAndStrength?.triet?.branches?.join(', ') || '-'}.`,
+        ].join(' ');
+
+        const palaceTexts = chart.palaces.map((palace) => {
+            const mainText = palace.stars.main.length > 0
+                ? palace.stars.main
+                    .map((star) => `${star.name}${star.brightness ? ` (${star.brightness[0]})` : ''}`)
+                    .join(', ')
+                : 'Vô chính diệu';
+
+            const minorText = palace.stars.minor.length > 0
+                ? palace.stars.minor
+                    .map((star) => `${formatMinorStarDisplayName(star.name)}${getMinorBrightnessTag(star)}`)
+                    .join(', ')
+                : 'Không có phụ tinh nổi bật';
+
+            const thaiTueRing = thaiTueLabelByPalace.get(palace.index);
+            const locTonRing = locTonLabelByPalace.get(palace.index);
+            const trangSinh = trangSinhLabelByPalace.get(palace.index);
+            const dvRole = dvRoleByPalace.get(palace.index);
+            const lnRole = lnRoleByPalace.get(palace.index);
+            const dvAge = dvAgeRangeByPalace.get(palace.index);
+            const voidMarks = [
+                tuanPalaces.has(palace.index) ? 'Tuần' : '',
+                trietPalaces.has(palace.index) ? 'Triệt' : '',
+            ].filter(Boolean).join(', ');
+
+            const ringParts = [thaiTueRing, locTonRing, trangSinh].filter(Boolean).join(', ');
+            const cycleText = `${dvRole ? `dv.${dvRole}` : '-'} | ${lnRole ? `ln.${lnRole}` : '-'}${dvAge ? ` | Đại vận ${dvAge.start}-${dvAge.end}` : ''}`;
+
+            return `Cung ${palace.role} (${palace.branch}): Chính tinh ${mainText}. Phụ tinh ${minorText}. ${ringParts ? `Vòng sao: ${ringParts}. ` : ''}${cycleText}.${voidMarks ? ` Gặp ${voidMarks}.` : ''}`;
+        });
+
+        return `${coreInfo}\n\n${palaceTexts.join('\n\n')}`;
+    }, [
+        chart,
+        profile?.full_name,
+        profile?.email,
+        solarBirthText,
+        birthHourLabel,
+        effectiveViewYear,
+        thaiTueLabelByPalace,
+        locTonLabelByPalace,
+        trangSinhLabelByPalace,
+        dvRoleByPalace,
+        lnRoleByPalace,
+        dvAgeRangeByPalace,
+        tuanPalaces,
+        trietPalaces,
+    ]);
+
+    const tamHopAnalyses = useMemo(() => {
+        if (!chart) {
+            return [] as Array<{ id: TamHopGroupId; label: string; content: string }>;
+        }
+
+        const roleMap = new Map<string, ChartPalace>();
+        chart.palaces.forEach((palace) => {
+            roleMap.set(palace.role, palace);
+        });
+
+        return TAM_HOP_GROUPS.map((group) => {
+            const db = TAM_HOP_INTERPRETATION_DB[group.id];
+            const palaceSummaries = group.roles.map((role) => {
+                const palace = roleMap.get(role);
+                if (!palace) {
+                    return `Cung ${role}: chưa có dữ liệu.`;
+                }
+
+                const mainStars = palace.stars.main.length > 0
+                    ? palace.stars.main.map((s) => s.name).join(', ')
+                    : 'Vô chính diệu';
+                const { good, bad } = classifyMinorStars(palace.stars.minor);
+
+                return `Cung ${role} (${palace.branch}) có chính tinh ${mainStars}; cát tinh ${good.length} và sát tinh ${bad.length}.`;
+            }).join(' ');
+
+            const content = `${db.overview} ${db.focus} ${palaceSummaries} ${db.note}`;
+            return {
+                id: group.id,
+                label: group.label,
+                content,
+            };
+        });
+    }, [chart]);
+
     useEffect(() => {
         setGender(getStoredTuViGender());
     }, []);
@@ -753,6 +887,60 @@ export default function TuViPage() {
             toast.error('Đã xảy ra lỗi khi lưu thông tin');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDeepInterpretation = async () => {
+        const question = deepQuestion.trim();
+        if (!question) {
+            toast.error('Vui lòng nhập câu hỏi để luận giải chuyên sâu');
+            return;
+        }
+
+        if (!chart || !fullTextReport) {
+            toast.error('Thiếu dữ liệu lá số để gửi AI');
+            return;
+        }
+
+        if (!profile?.is_pro && profile && profile.credits < 10) {
+            toast.error('Không đủ xu để luận giải chuyên sâu. Cần tối thiểu 10 xu.');
+            return;
+        }
+
+        setIsDeepLoading(true);
+        setDeepAnswer('');
+
+        try {
+            const response = await fetch('/api/tuvi/interpret', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question,
+                    chartText: fullTextReport,
+                }),
+            });
+
+            const answerText = await response.text();
+            if (!response.ok) {
+                let message = answerText || 'Không thể luận giải chuyên sâu lúc này';
+                try {
+                    const parsed = JSON.parse(answerText) as { error?: string };
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    // keep plain text fallback
+                }
+                toast.error(message);
+                return;
+            }
+
+            setDeepAnswer(answerText || 'AI chưa trả về nội dung.');
+            await fetchProfile();
+        } catch {
+            toast.error('Lỗi kết nối khi gửi yêu cầu luận giải chuyên sâu');
+        } finally {
+            setIsDeepLoading(false);
         }
     };
 
@@ -1016,6 +1204,52 @@ export default function TuViPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <Card className="border-mystic-gold/20 bg-[#F1ECE3]">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-base text-mystic-gold">Luận Giải Tam Hợp</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                {tamHopAnalyses.map((item) => (
+                                    <details key={item.id} className="rounded-md border border-mystic-gold/20 bg-white/60 px-3 py-2">
+                                        <summary className="cursor-pointer text-sm font-semibold text-slate-800">{item.label}</summary>
+                                        <p className="mt-2 text-sm leading-6 text-slate-700">{item.content}</p>
+                                    </details>
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-mystic-gold/20 bg-[#F1ECE3]">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-base text-mystic-gold">Luận Giải Chuyên Sâu</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <Textarea
+                                    value={deepQuestion}
+                                    onChange={(e) => setDeepQuestion(e.target.value)}
+                                    placeholder={'"đại vận 16 tới 25 tuổi của tôi diễn ra như nào"\n"tiểu vận năm 18 tuổi của tôi ra sao"\n"con đường sự nghiệp tôi ra sao"\n"chấm điểm lá số"'}
+                                    className="min-h-[90px] bg-white"
+                                />
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs text-slate-500">Tử vi phái Thái Thứ Lang - Tử vi đẩu số</p>
+                                    <Button onClick={handleDeepInterpretation} disabled={isDeepLoading || !deepQuestion.trim()}>
+                                        {isDeepLoading ? (
+                                            'Đang luận giải...'
+                                        ) : (
+                                            <span className="flex items-center gap-2">
+                                                Gửi luận giải chuyên sâu
+                                                <PriceTag isPro={profile?.is_pro} price={10} />
+                                            </span>
+                                        )}
+                                    </Button>
+                                </div>
+                                {deepAnswer && (
+                                    <div className="rounded-md border border-mystic-gold/20 bg-white px-3 py-2">
+                                        <p className="whitespace-pre-line text-sm leading-6 text-slate-700">{deepAnswer}</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 )}
             </div>

@@ -115,7 +115,7 @@ export default function AdminOverviewPage() {
         <div className="space-y-8">
             <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-mystic-purple mb-2">
-                    Release 1.1.5 - Cập nhật ngày 22/3/2026
+                    Release 1.2.1 - Cập nhật ngày 25/3/2026
                 </p>
                 <h1 className="text-3xl font-bold text-mystic-gold text-gold-glow flex items-center gap-3">
                     <Activity className="w-8 h-8" />

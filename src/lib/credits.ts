@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 
-const FREE_DAILY_CREDITS = 10;
 const PREMIUM_DAILY_CREDITS = 100;
 
 /**
@@ -61,11 +60,6 @@ export async function checkAndResetCredits(userId: string) {
     if (today.getTime() > lastResetDay.getTime()) {
         if (isPremiumNow) {
             updateData.credits = PREMIUM_DAILY_CREDITS;
-            updateData.last_reset_date = now;
-            needsUpdate = true;
-        } else {
-            // Free user daily reset
-            updateData.credits = Math.max(profile.credits, FREE_DAILY_CREDITS);
             updateData.last_reset_date = now;
             needsUpdate = true;
         }

@@ -113,46 +113,6 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
             return;
         }
 
-        // Check if user has enough credits (skip for PRO users)
-        if (!profile?.is_pro && profile && profile.credits < 10) {
-            toast.error('Không đủ xu để gieo quẻ. Vui lòng nâng cấp gói đăng ký.');
-            setTimeout(() => {
-                window.location.href = '/#pricing';
-            }, 1500);
-            return;
-        }
-
-        setIsShaking(true);
-
-        try {
-            const res = await fetch('/api/credits/deduct', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: 10, reason: 'gieo_que' }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                if (res.status === 402) {
-                    toast.error('Không đủ xu để gieo quẻ. Vui lòng nâng cấp gói đăng ký.');
-                    setTimeout(() => {
-                        window.location.href = '/#pricing';
-                    }, 1500);
-                } else {
-                    toast.error(data.error || 'Trừ xu thất bại. Bạn có đủ xu không?');
-                }
-                setIsShaking(false);
-                return;
-            }
-
-            // Sync credits immediately
-            fetchProfile();
-        } catch {
-            toast.error('Lỗi kết nối. Vui lòng thử lại.');
-            setIsShaking(false);
-            return;
-        }
-
         setPhase('shaking');
         setIsShaking(true);
 
@@ -347,12 +307,7 @@ export function DivinationSession({ hexagrams }: DivinationSessionProps) {
                                         disabled={trimmedQuestion.length < 10 || isShaking}
                                         className="w-full gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 hover:from-mystic-gold hover:to-yellow-600 text-black font-semibold h-12 text-lg gold-glow"
                                     >
-                                        {isShaking ? 'Đang chuẩn bị...' : (
-                                            <span className="flex items-center gap-2">
-                                                Bắt Đầu Gieo Quẻ
-                                                <PriceTag isPro={profile?.is_pro} price={10} />
-                                            </span>
-                                        )}
+                                        {isShaking ? 'Đang chuẩn bị...' : 'Bắt Đầu Gieo Quẻ'}
                                     </Button>
                                 </CardContent>
                             </Card>

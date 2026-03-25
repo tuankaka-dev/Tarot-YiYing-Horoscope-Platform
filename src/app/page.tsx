@@ -118,6 +118,22 @@ export default function LandingPage() {
                 Bắt Đầu Gieo Quẻ
               </Button>
             </Link>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/tuvi"
+                className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
+              >
+                Lập Lá Số Tử Vi
+              </Link>
+              <Link
+                href="/tarot"
+                className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
+              >
+                Trải Bài Tarot
+              </Link>
+            </div>
+
             {!user && (
               <Link href="/register">
                 <Button
@@ -173,25 +189,26 @@ export default function LandingPage() {
               <ul className="text-left space-y-3 mt-6 mb-8 text-foreground/70 flex-1">
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
-                  Nhận <strong className="text-foreground px-1">10 xu</strong> mỗi ngày
+                  Gieo quẻ Kinh Dịch mỗi ngày miễn phí không giới hạn 
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
-                  Gieo quẻ Kinh Dịch cơ bản
+                  Lập lá số tử vi mỗi ngày miễn phí không giới hạn 
                 </li>
-                <li className="flex items-start gap-2">
+           <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
-                  Xem ý nghĩa quẻ chính & quẻ biến
+                  Trải bài tarot mỗi ngày miễn phí không giới hạn 
                 </li>
                 <li className="flex items-start gap-4 ml-0.5 mt-1 border-t border-border/50 pt-3">
-                  <div className="flex items-center gap-2 opacity-60">
-                    <X className="w-4 h-4 text-destructive shrink-0" />
-                    <span className="text-sm">Không có Luận giải chuyên sâu</span>
-                  </div>
+                  
+                </li>
+                 <li className="flex items-center gap-2 opacity-60">
+                  <X className="w-4 h-4 text-destructive shrink-0" />
+                  <span className="text-sm font-bold">Không được luận giải chuyên sâu và chi tiết các vấn đề, lời khuyên  </span>
                 </li>
                 <li className="flex items-center gap-2 opacity-60">
                   <X className="w-4 h-4 text-destructive shrink-0" />
-                  <span className="text-sm">Ưu tiên xử lý thấp hơn</span>
+                  <span className="text-sm font-bold">Ưu tiên xử lý thấp hơn</span>
                 </li>
               </ul>
 
@@ -216,7 +233,7 @@ export default function LandingPage() {
               <h3 className="text-xl font-bold text-foreground first-letter:uppercase">Gói Tuần</h3>
 
               <div className="text-3xl font-bold text-mystic-gold drop-shadow-sm">
-                50.000₫ <span className="text-sm font-normal text-muted-foreground mr-1">/</span> <span className="text-sm font-medium text-foreground/80 lowercase">tuần</span>
+                50.000₫ <span className="text-sm font-normal text-muted-foreground mr-1"></span> <span className="text-sm font-medium text-foreground/80 lowercase"></span>
               </div>
 
               <ul className="text-left space-y-2 mt-4 mb-6 text-foreground/80 flex-1 text-sm">
@@ -230,7 +247,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start gap-2 font-semibold text-mystic-gold py-1 bg-mystic-gold/5 rounded-lg px-2 -mx-2">
                   <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
-                  Gieo quẻ - giải quẻ chuyên sâu, xem tử vi, xem tarot giới hạn lượt (hết xu)
+                  Gieo quẻ - giải quẻ chuyên sâu, xem tử vi chi tiết, trải bài tarot chi tiết ( giới hạn lượt )
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-mystic-gold mt-0.5 shrink-0" />
@@ -262,7 +279,7 @@ export default function LandingPage() {
               <h3 className="text-2xl font-black text-foreground uppercase tracking-widest">Gói Tháng</h3>
 
               <div className="text-4xl font-black text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]">
-                100.000₫ <span className="text-lg font-normal text-muted-foreground mr-1">/</span> <span className="text-lg font-bold text-foreground/80">tháng</span>
+                100.000₫ <span className="text-lg font-normal text-muted-foreground mr-1"></span> <span className="text-lg font-bold text-foreground/80"></span>
               </div>
 
               <ul className="text-left space-y-3 mt-4 mb-6 text-foreground flex-1">
@@ -297,7 +314,133 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
-      {/* Features Section */}
+   
+
+      {/* Knowledge Decor Section */}
+      <section className="relative py-20 px-4 bg-gradient-to-b from-[#f8f5ef] via-[#f3eee4] to-[#ede5d7] border-t border-mystic-gold/20">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <motion.div
+            className="text-center space-y-3"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-black text-[#1f1b16] tracking-tight">
+              Kinh Dịch: Bản Đồ Minh Triết Nhân Sinh
+            </h2>
+            <p className="text-base md:text-xl text-[#3d3529] max-w-4xl mx-auto">
+              Hiểu Kinh Dịch là hiểu quy luật cân bằng, biến đổi và khả năng thích nghi để ra quyết định đúng thời điểm.
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-3xl bg-white/80 border border-[#d1b88b] p-6 shadow-sm"
+            >
+              <p className="text-4xl mb-3">☯</p>
+              <h3 className="text-2xl font-bold text-[#1f1b16] mb-2">Âm Dương - Cội Nguồn Cân Bằng</h3>
+              <p className="text-[#4b4338] leading-relaxed">
+                Mọi sự vật đều vận hành bởi hai lực đối đãi và bổ sung. Nhìn rõ âm - dương giúp ta tránh cực đoan,
+                chọn hành động vừa đúng người vừa đúng thời.
+              </p>
+              <div className="mt-4 rounded-xl bg-gradient-to-r from-[#8f2f2a] to-[#c89a3a] text-white px-4 py-2 text-sm font-medium">
+                Đối kháng để phát triển, hòa hợp để bền vững.
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.08 }}
+              className="rounded-3xl bg-white/80 border border-[#9bb093] p-6 shadow-sm"
+            >
+              <p className="text-4xl mb-3">☰</p>
+              <h3 className="text-2xl font-bold text-[#1f1b16] mb-2">64 Quẻ - Bản Đồ Tình Huống</h3>
+              <p className="text-[#4b4338] leading-relaxed">
+                Từ 8 quái cơ bản hình thành 64 quẻ, phản ánh các trạng thái quen thuộc của đời sống: khởi đầu, bế tắc,
+                chuyển giao, thuận lợi, và trưởng thành.
+              </p>
+              <div className="mt-4 rounded-xl bg-gradient-to-r from-[#3a6f4b] to-[#2f5f86] text-white px-4 py-2 text-sm font-medium">
+                Nhận diện đúng bối cảnh trước khi quyết định.
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.16 }}
+              className="rounded-3xl bg-white/80 border border-[#8ca198] p-6 shadow-sm"
+            >
+              <p className="text-4xl mb-3">⟲</p>
+              <h3 className="text-2xl font-bold text-[#1f1b16] mb-2">Ba Nguyên Lý: Biến - Bất - Giản</h3>
+              <p className="text-[#4b4338] leading-relaxed">
+                Vạn vật luôn biến đổi, nhưng vẫn có quy luật bền vững; khi hiểu sâu, ta diễn giải mọi chuyện theo cách
+                giản dị và sáng rõ hơn.
+              </p>
+              <div className="mt-4 rounded-xl bg-gradient-to-r from-[#c9a143] to-[#2f6b50] text-white px-4 py-2 text-sm font-medium">
+                Sống trung chính và hợp thời để bớt sai lầm lớn.
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="rounded-3xl border border-mystic-gold/25 bg-white/80 p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-mystic-gold/15 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-mystic-gold" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#1f1b16]">Tử Vi: Bản Đồ Vận Trình Cá Nhân</h3>
+              </div>
+              <p className="text-[#4b4338] leading-relaxed">
+                Tử Vi Đẩu Số dùng giờ - ngày - tháng - năm sinh để lập 12 cung và hệ sao, từ đó đọc ra thiên hướng
+                về mệnh cách, sự nghiệp, tài lộc, tình cảm và chu kỳ đại vận - tiểu vận theo từng giai đoạn đời người.
+              </p>
+              <div className="mt-4 grid sm:grid-cols-2 gap-2 text-sm">
+                <div className="rounded-xl bg-[#f6f1e7] px-3 py-2 text-[#3e3428]">12 cung phản ánh các mặt đời sống</div>
+                <div className="rounded-xl bg-[#f6f1e7] px-3 py-2 text-[#3e3428]">Đại vận giúp định hướng 10 năm</div>
+                <div className="rounded-xl bg-[#f6f1e7] px-3 py-2 text-[#3e3428]">Tiểu vận giúp quan sát từng năm</div>
+                <div className="rounded-xl bg-[#f6f1e7] px-3 py-2 text-[#3e3428]">Là công cụ tự nhận thức và điều chỉnh</div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.08 }}
+              className="rounded-3xl border border-mystic-purple/25 bg-white/80 p-6 shadow-sm"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-mystic-purple/15 flex items-center justify-center">
+                  <Crown className="w-5 h-5 text-mystic-purple" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#1f1b16]">Tarot: Gương Soi Nội Tâm Hiện Tại</h3>
+              </div>
+              <p className="text-[#4b4338] leading-relaxed">
+                Tarot gồm 78 lá, chia thành Ẩn Chính và Ẩn Phụ, thường dùng để soi chiếu trạng thái cảm xúc, động lực,
+                nỗi sợ và cơ hội trong hiện tại gần. Trải bài phù hợp giúp bạn nhìn rõ điều cần làm ngay bây giờ.
+              </p>
+              <div className="mt-4 grid sm:grid-cols-2 gap-2 text-sm">
+                <div className="rounded-xl bg-[#f1ecf8] px-3 py-2 text-[#3a3248]">1 lá: thông điệp trọng tâm</div>
+                <div className="rounded-xl bg-[#f1ecf8] px-3 py-2 text-[#3a3248]">3 lá: quá khứ - hiện tại - xu hướng</div>
+                <div className="rounded-xl bg-[#f1ecf8] px-3 py-2 text-[#3a3248]">5 lá: đọc sâu vấn đề cụ thể</div>
+                <div className="rounded-xl bg-[#f1ecf8] px-3 py-2 text-[#3a3248]">Dùng để phản tư, không thay thế quyết định cá nhân</div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+         {/* Features Section */}
       <section className="relative py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -363,11 +506,21 @@ export default function LandingPage() {
             <span className="text-xl">☯</span>
             <span className="text-sm text-muted-foreground">GieoQuẻ.App</span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Kinh Dịch là kim chỉ nam, không phải lời tiên tri. Hãy dùng trí tuệ của nó để suy ngẫm về con đường của bạn.
-          </p>
+          <div className="text-center md:text-right">
+            <p className="text-xs text-muted-foreground">
+              Kinh Dịch là kim chỉ nam, không phải lời tiên tri. Hãy dùng trí tuệ của nó để suy ngẫm về con đường của bạn.
+            </p>
+            <Link
+              href="/terms-services"
+              className="mt-1 inline-block text-[11px] text-mystic-gold/80 hover:text-mystic-gold transition-colors"
+            >
+              Terms & Services
+            </Link>
+          </div>
         </div>
       </footer>
+
+   
     </div>
   );
 }

@@ -190,7 +190,7 @@ export default function DashboardPage() {
                                 ) : profile?.is_premium ? (
                                     <span>Bạn đang sử dụng gói <strong className="text-mystic-gold font-bold">Gói Tuần (Premium)</strong></span>
                                 ) : (
-                                    <>Mỗi ngày nhận miễn phí <strong className="text-mystic-gold font-bold">10 xu</strong> (Bạn đang sử dụng <strong>Gói Miễn Phí</strong>).</>
+                                    <>Bạn đang sử dụng <strong>Gói Miễn Phí</strong>. Gieo quẻ, lập lá số Tử Vi và trải Tarot cơ bản đều miễn phí; chỉ luận giải chuyên sâu mới tốn xu.</>
                                 )}
                             </p>
 

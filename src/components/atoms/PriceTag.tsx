@@ -12,7 +12,7 @@ export function PriceTag({ isPro = false, price = 10, className = '' }: PriceTag
     if (isPro) {
         return (
             <span className={`inline-flex items-center gap-1  from-amber-500/20 to-yellow-500/20 text-white text-lg font-bold ${className}`}>
-                Free
+                FREE
             </span>
         );
     }

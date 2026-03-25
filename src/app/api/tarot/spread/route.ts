@@ -37,8 +37,6 @@ function getBasicMessage(cards: Array<TarotCardRow & { is_reversed: boolean }>) 
 }
 
 export async function POST(request: NextRequest) {
-    let shouldRefund = false;
-
     try {
         await ensureTarotInfrastructure();
 
@@ -89,25 +87,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
         }
 
-        if (!profile.is_pro) {
-            const updated = await prisma.profile.updateMany({
-                where: {
-                    id: user.id,
-                    credits: { gte: 10 },
-                },
-                data: { credits: { decrement: 10 } },
-            });
-
-            if (updated.count === 0) {
-                return NextResponse.json(
-                    { error: 'Không đủ xu để trải bài. Vui lòng nạp thêm xu hoặc nâng cấp gói.' },
-                    { status: 402 }
-                );
-            }
-
-            shouldRefund = true;
-        }
-
         const cards = await prisma.$queryRaw<TarotCardRow[]>`
             SELECT id, name, name_vi, meaning, image_url, card_type, suit, number, keywords
             FROM tarot_cards
@@ -151,24 +130,6 @@ export async function POST(request: NextRequest) {
         });
     } catch (error) {
         console.error('Tarot spread error:', error);
-
-        if (shouldRefund) {
-            try {
-                const supabase = await createClient();
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-
-                if (user) {
-                    await prisma.profile.update({
-                        where: { id: user.id },
-                        data: { credits: { increment: 10 } },
-                    });
-                }
-            } catch (refundError) {
-                console.error('Failed to refund credits after tarot spread error:', refundError);
-            }
-        }
 
         return NextResponse.json({ error: 'Không thể trải bài lúc này. Vui lòng thử lại sau.' }, { status: 500 });
     }

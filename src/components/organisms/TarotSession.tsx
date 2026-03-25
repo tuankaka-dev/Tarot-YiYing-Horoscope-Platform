@@ -123,11 +123,7 @@ export function TarotSession() {
             const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                if (res.status === 402) {
-                    toast.error(data.error || 'Không đủ xu để trải bài.');
-                } else {
-                    toast.error(data.error || 'Không thể trải bài lúc này.');
-                }
+                toast.error(data.error || 'Không thể trải bài lúc này.');
                 return;
             }
 
@@ -191,7 +187,7 @@ export function TarotSession() {
                 <CardContent className="p-6 md:p-8 space-y-5">
                     <div className="text-center space-y-2">
                         <h1 className="text-3xl md:text-4xl font-bold text-mystic-gold text-gold-glow">✦ Xem Tarot ✦</h1>
-                        <p className="text-muted-foreground">Đặt câu hỏi, chọn số lá và trải bài. Mỗi lượt trải tốn 10 xu.</p>
+                        <p className="text-muted-foreground">Đặt câu hỏi, chọn số lá và trải bài miễn phí. Chỉ thông điệp chuyên sâu mới tốn 10 xu.</p>
                     </div>
 
                     <Textarea
@@ -223,10 +219,7 @@ export function TarotSession() {
                             className="gap-2 bg-gradient-to-r from-fuchsia-700 to-violet-700 hover:from-fuchsia-600 hover:to-violet-600 text-white font-semibold"
                         >
                             {isSpreading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-                            <span className="flex items-center gap-2">
-                                Trải Bài
-                                <PriceTag isPro={profile?.is_pro} price={10} />
-                            </span>
+                            Trải Bài
                         </Button>
                     </div>
                 </CardContent>
