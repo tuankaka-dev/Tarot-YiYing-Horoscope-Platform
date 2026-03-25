@@ -27,6 +27,8 @@ model Profile {
   histories    UserHistory[]
   tarot_readings TarotReading[]
   transactions Transaction[]
+  astrology_charts AstrologyChart[]
+  astrology_readings AstrologyReading[]
 
   @@map("profiles")
 }
@@ -131,4 +133,35 @@ model SystemNotification {
   created_at DateTime @default(now())
 
   @@map("system_notifications")
+}
+
+// Legacy tables kept to avoid destructive schema drift during Prisma push/migrate.
+model AstrologyChart {
+  id            String   @id @db.Uuid
+  user_id       String   @db.Uuid
+  chart_hash    String
+  chart_data    Json
+  overall_score Int
+  created_at    DateTime @default(now())
+
+  profile  Profile            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  readings AstrologyReading[]
+
+  @@index([user_id, chart_hash], map: "astrology_charts_user_hash_idx")
+  @@map("astrology_charts")
+}
+
+model AstrologyReading {
+  id          String   @id @db.Uuid
+  user_id     String   @db.Uuid
+  chart_id    String   @db.Uuid
+  question    String   @db.Text
+  ai_response String   @db.Text
+  created_at  DateTime @default(now())
+
+  profile Profile        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  chart   AstrologyChart @relation(fields: [chart_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, chart_id], map: "astrology_readings_user_chart_idx")
+  @@map("astrology_readings")
 }
