@@ -42,6 +42,8 @@ type ChartStar = {
 type ChartPalace = {
     index: number;
     branch: string;
+    stemIndex?: number;
+    stemName?: string;
     role: string;
     stars: {
         main: ChartStar[];
@@ -73,9 +75,33 @@ type TuViChart = {
         than: number;
         menhBranch: string;
         thanBranch: string;
+        chuMenh?: string;
+        chuThan?: string;
         cuc: {
             name: string;
             value: number;
+        };
+        banMenh?: {
+            value: 1 | 2 | 3 | 4 | 5;
+            element: 'Kim' | 'Thủy' | 'Hỏa' | 'Thổ' | 'Mộc';
+            canChi?: string;
+            napAm?: string;
+            yNghia?: string;
+        };
+        laiNhanCung?: {
+            yearStemName?: string;
+            palaces?: number[];
+            branches?: string[];
+            roles?: string[];
+        };
+        canLuong?: {
+            total: number;
+            luong: number;
+            chi: number;
+            year: number;
+            month: number;
+            day: number;
+            hour: number;
         };
     };
     cycles?: {
@@ -83,6 +109,16 @@ type TuViChart = {
         thaiTueRing?: number[];
         locTonRing?: number[];
         trangSinhRing?: number[];
+    };
+    voidsAndStrength?: {
+        triet?: {
+            palaces?: number[];
+            branches?: string[];
+        };
+        tuan?: {
+            palaces?: number[];
+            branches?: string[];
+        };
     };
     palaces: ChartPalace[];
 };
@@ -120,6 +156,26 @@ const BAD_STAR_NAMES = new Set([
 ]);
 
 const BAD_STAR_KEYWORDS = ['Kình', 'Đà', 'Không', 'Kiếp', 'Kỵ', 'Hổ', 'Sát', 'Khốc', 'Hư', 'Hao', 'Tang'];
+const VIEW_YEAR_LUU_STARS = new Set([
+    'Lưu Lộc Tồn',
+    'Lưu Kình Dương',
+    'Lưu Thái Tuế',
+    'Lưu Tang Môn',
+    'Lưu Bạch Hổ',
+    'Lưu Thiên Mã',
+    'Lưu Thiên Khốc',
+    'Lưu Thiên Hư',
+    'Lưu Thiên Khôi',
+    'Lưu Thiên Việt',
+    'Lưu Đào Hoa',
+    'Lưu Hồng Loan',
+    'Lưu Văn Xương',
+    'Lưu Văn Khúc',
+    'Lưu Hóa Lộc',
+    'Lưu Hóa Quyền',
+    'Lưu Hóa Khoa',
+    'Lưu Hóa Kỵ',
+]);
 const PALACE_GRID_ORDER: Array<string | null> = [
     'Tỵ', 'Ngọ', 'Mùi', 'Thân',
     'Thìn', null, null, 'Dậu',
@@ -129,6 +185,21 @@ const PALACE_GRID_ORDER: Array<string | null> = [
 const TRANG_SINH_LABELS = ['Tràng Sinh', 'Mộc Dục', 'Quan Đới', 'Lâm Quan', 'Đế Vượng', 'Suy', 'Bệnh', 'Tử', 'Mộ', 'Tuyệt', 'Thai', 'Dưỡng'];
 const THAI_TUE_RING_STARS = ['Thái Tuế', 'Thiếu Dương', 'Tang Môn', 'Thiếu Âm', 'Quan Phù', 'Tử Phù', 'Tuế Phá', 'Long Đức', 'Bạch Hổ', 'Phúc Đức', 'Điếu Khách', 'Trực Phù'];
 const LOC_TON_RING_STARS = ['Bác Sĩ', 'Lực Sĩ', 'Thanh Long', 'Tiểu Hao', 'Tướng Quân', 'Tấu Thư', 'Phi Liêm', 'Hỷ Thần', 'Bệnh Phù', 'Đại Hao', 'Phục Binh', 'Quan Phủ'];
+const DV_LN_ROLE_ORDER = ['Mệnh', 'Phụ', 'Phúc', 'Điền', 'Quan', 'Nô', 'Di', 'Tật', 'Tài', 'Tử', 'Phối', 'Huynh'] as const;
+const BRANCH_INDEX: Record<string, number> = {
+    'Tý': 0,
+    'Sửu': 1,
+    'Dần': 2,
+    'Mão': 3,
+    'Thìn': 4,
+    'Tỵ': 5,
+    'Ngọ': 6,
+    'Mùi': 7,
+    'Thân': 8,
+    'Dậu': 9,
+    'Tuất': 10,
+    'Hợi': 11,
+};
 const CENTER_START_INDEX = 5;
 const CENTER_SKIP_INDEXES = new Set([6, 9, 10]);
 const ELEMENT_STYLE: Record<string, { text: string; border: string; bg: string }> = {
@@ -264,7 +335,8 @@ const MAIN_STAR_NGU_HANH: Record<string, NguHanh> = {
 };
 
 function getMinorStarTextClass(starName: string, isBad: boolean): string {
-    const nguHanh = MINOR_STAR_NGU_HANH[starName];
+    const normalizedName = normalizeMinorStarName(starName);
+    const nguHanh = MINOR_STAR_NGU_HANH[normalizedName] ?? MINOR_STAR_NGU_HANH[starName];
     if (nguHanh) {
         return ELEMENT_STYLE[nguHanh].text;
     }
@@ -279,22 +351,60 @@ function getMainStarTextClass(starName: string): string {
     return 'text-slate-900';
 }
 
+function getMinorBrightnessTag(star: ChartStar): string {
+    return star.brightness ? ` (${star.brightness[0]})` : '';
+}
+
+const MINOR_BRIGHTNESS_BY_INDEX: Record<string, Partial<Record<number, 'M' | 'Đ' | 'H'>>> = {
+    'Kình Dương': { 1: 'M', 4: 'M', 7: 'M', 10: 'M' },
+    'Đà La': { 1: 'M', 4: 'M', 7: 'M', 10: 'M' },
+    'Địa Không': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+    'Địa Kiếp': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+    'Hỏa Tinh': { 2: 'Đ', 5: 'Đ', 6: 'Đ', 8: 'Đ' },
+    'Linh Tinh': { 2: 'Đ', 5: 'Đ', 6: 'Đ', 8: 'Đ' },
+    'Văn Xương': { 1: 'Đ', 3: 'Đ', 5: 'Đ', 7: 'Đ', 9: 'Đ', 11: 'Đ' },
+    'Văn Khúc': { 1: 'Đ', 3: 'Đ', 5: 'Đ', 7: 'Đ', 9: 'Đ', 11: 'Đ' },
+    'Hóa Kỵ': { 0: 'Đ', 11: 'Đ' },
+    'Lộc Tồn': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+    'Thiên Mã': { 2: 'Đ', 8: 'Đ' },
+    'Thanh Long': { 4: 'Đ' },
+    'Phượng Các': { 9: 'Đ' },
+    'Thiên Khốc': { 0: 'Đ', 6: 'Đ' },
+    'Thiên Hư': { 0: 'Đ', 6: 'Đ' },
+    'Đào Hoa': { 0: 'H', 3: 'M' },
+};
+
+function resolveMinorBrightnessByIndex(starName: string, palaceIndex: number): string | undefined {
+    const normalizedName = normalizeMinorStarName(starName);
+    const rule = MINOR_BRIGHTNESS_BY_INDEX[normalizedName] ?? MINOR_BRIGHTNESS_BY_INDEX[starName];
+    const symbol = rule?.[palaceIndex];
+    if (!symbol) {
+        return undefined;
+    }
+
+    if (symbol === 'M') return 'Miếu';
+    if (symbol === 'Đ') return 'Đắc';
+    return 'Hãm';
+}
+
 function classifyMinorStars(stars: ChartStar[]) {
     const good: ChartStar[] = [];
     const bad: ChartStar[] = [];
 
     stars.forEach((star) => {
-        if (GOOD_STAR_NAMES.has(star.name)) {
+        const normalizedName = normalizeMinorStarName(star.name);
+
+        if (GOOD_STAR_NAMES.has(normalizedName) || GOOD_STAR_NAMES.has(star.name)) {
             good.push(star);
             return;
         }
 
-        if (BAD_STAR_NAMES.has(star.name)) {
+        if (BAD_STAR_NAMES.has(normalizedName) || BAD_STAR_NAMES.has(star.name)) {
             bad.push(star);
             return;
         }
 
-        const isBad = BAD_STAR_KEYWORDS.some((keyword) => star.name.includes(keyword));
+        const isBad = BAD_STAR_KEYWORDS.some((keyword) => normalizedName.includes(keyword) || star.name.includes(keyword));
         if (isBad) {
             bad.push(star);
             return;
@@ -305,9 +415,50 @@ function classifyMinorStars(stars: ChartStar[]) {
     return { good, bad };
 }
 
+function normalizeMinorStarName(starName: string): string {
+    if (starName.startsWith('Lưu ')) {
+        return starName.slice(4);
+    }
+
+    return starName;
+}
+
+function formatMinorStarDisplayName(starName: string): string {
+    if (VIEW_YEAR_LUU_STARS.has(starName) && starName.startsWith('Lưu ')) {
+        return `L.${starName.slice(4)}`;
+    }
+
+    return starName;
+}
+
+function normalizePalaceIndex(value: number): number {
+    const v = value % 12;
+    return v < 0 ? v + 12 : v;
+}
+
+function resolveTieuHanStartByYearChiAndGender(yearChiName: string, gender: TuViGender): number | null {
+    const isMale = gender === 'male';
+
+    if (['Tỵ', 'Dậu', 'Sửu'].includes(yearChiName)) {
+        return BRANCH_INDEX[isMale ? 'Mùi' : 'Sửu'];
+    }
+    if (['Hợi', 'Mão', 'Mùi'].includes(yearChiName)) {
+        return BRANCH_INDEX[isMale ? 'Sửu' : 'Mùi'];
+    }
+    if (['Thân', 'Tý', 'Thìn'].includes(yearChiName)) {
+        return BRANCH_INDEX[isMale ? 'Dần' : 'Thân'];
+    }
+    if (['Dần', 'Ngọ', 'Tuất'].includes(yearChiName)) {
+        return BRANCH_INDEX[isMale ? 'Thân' : 'Dần'];
+    }
+
+    return null;
+}
+
 export default function TuViPage() {
     const router = useRouter();
     const { user, profile, isLoading, fetchProfile } = useAuthStore();
+    const initialViewYear = new Date().getFullYear();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [birthDay, setBirthDay] = useState('');
     const [birthMonth, setBirthMonth] = useState('');
@@ -318,6 +469,7 @@ export default function TuViPage() {
     const [chart, setChart] = useState<TuViChart | null>(null);
     const [chartError, setChartError] = useState('');
     const [isChartLoading, setIsChartLoading] = useState(false);
+    const [viewYear, setViewYear] = useState(String(initialViewYear));
 
     const palaceByBranch = useMemo(() => {
         const map = new Map<string, ChartPalace>();
@@ -399,6 +551,103 @@ export default function TuViPage() {
         return map;
     }, [chart]);
 
+    const effectiveViewYear = useMemo(() => {
+        const parsed = Number.parseInt(viewYear, 10);
+        if (Number.isNaN(parsed) || parsed < 1) {
+            return initialViewYear;
+        }
+        return parsed;
+    }, [viewYear, initialViewYear]);
+
+    const dvRoleByPalace = useMemo(() => {
+        const map = new Map<number, string>();
+        if (!chart) {
+            return map;
+        }
+
+        const birthYear = chart.input?.solar?.year;
+        if (!birthYear) {
+            return map;
+        }
+
+        const currentAge = effectiveViewYear - birthYear + 1;
+        const cucValue = chart.core.cuc.value;
+        const cycleIndex = Math.max(0, Math.floor((currentAge - cucValue) / 10));
+
+        const isForward = chart.cycles?.direction
+            ? chart.cycles.direction === 'forward'
+            : (['Giáp', 'Bính', 'Mậu', 'Canh', 'Nhâm'].includes(chart.preProcessing.lunar.yearStemName)
+                ? gender === 'male'
+                : gender === 'female');
+        const step = isForward ? 1 : -1;
+
+        const dvMenhPalace = normalizePalaceIndex(chart.core.menh + cycleIndex * step);
+        DV_LN_ROLE_ORDER.forEach((role, idx) => {
+            map.set(normalizePalaceIndex(dvMenhPalace + idx), role);
+        });
+
+        return map;
+    }, [chart, effectiveViewYear, gender]);
+
+    const dvAgeRangeByPalace = useMemo(() => {
+        const map = new Map<number, { start: number; end: number }>();
+        if (!chart) {
+            return map;
+        }
+
+        const isForward = chart.cycles?.direction
+            ? chart.cycles.direction === 'forward'
+            : (['Giáp', 'Bính', 'Mậu', 'Canh', 'Nhâm'].includes(chart.preProcessing.lunar.yearStemName)
+                ? gender === 'male'
+                : gender === 'female');
+        const step = isForward ? 1 : -1;
+        const baseAge = chart.core.cuc.value;
+
+        for (let i = 0; i < 12; i += 1) {
+            const palaceIndex = normalizePalaceIndex(chart.core.menh + i * step);
+            const start = baseAge + i * 10;
+            map.set(palaceIndex, { start, end: start + 9 });
+        }
+
+        return map;
+    }, [chart, gender]);
+
+    const lnRoleByPalace = useMemo(() => {
+        const map = new Map<number, string>();
+
+        const birthYear = chart?.input?.solar?.year;
+        const yearChiName = chart?.preProcessing?.lunar?.yearChiName;
+
+        let tieuHanIndex = normalizePalaceIndex((effectiveViewYear + 8) % 12);
+        if (birthYear && yearChiName) {
+            const currentAge = effectiveViewYear - birthYear + 1;
+            const startIndex = resolveTieuHanStartByYearChiAndGender(yearChiName, gender);
+            if (startIndex !== null) {
+                const step = gender === 'male' ? 1 : -1;
+                tieuHanIndex = normalizePalaceIndex(startIndex + (currentAge - 1) * step);
+            }
+        }
+
+        // Tag_LN = (palaceIndex - tieuHanIndex + 12) % 12
+        // 0 -> Mệnh, 1 -> Phụ, ...
+        for (let palaceIndex = 0; palaceIndex < 12; palaceIndex += 1) {
+            const tagLn = normalizePalaceIndex(palaceIndex - tieuHanIndex);
+            map.set(palaceIndex, DV_LN_ROLE_ORDER[tagLn]);
+        }
+
+        return map;
+    }, [chart, effectiveViewYear, gender]);
+
+    const trietPalaces = useMemo(() => {
+        const palaces = chart?.voidsAndStrength?.triet?.palaces ?? [];
+        return new Set(palaces);
+    }, [chart]);
+
+    const tuanPalaces = useMemo(() => {
+        const palaces = chart?.voidsAndStrength?.tuan?.palaces ?? [];
+        return new Set(palaces);
+    }, [chart]);
+
     useEffect(() => {
         setGender(getStoredTuViGender());
     }, []);
@@ -434,14 +683,14 @@ export default function TuViPage() {
 
         void fetchChart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLoading, isDialogOpen, profile?.birth_date, profile?.birth_time, gender]);
+    }, [isLoading, isDialogOpen, profile?.birth_date, profile?.birth_time, gender, effectiveViewYear]);
 
     const fetchChart = async () => {
         setIsChartLoading(true);
         setChartError('');
 
         try {
-            const response = await fetch(`/api/tuvi/chart?gender=${gender}`);
+            const response = await fetch(`/api/tuvi/chart?gender=${gender}&viewYear=${effectiveViewYear}`);
             const payload = await response.json().catch(() => null);
 
             if (!response.ok) {
@@ -518,6 +767,16 @@ export default function TuViPage() {
                         </p>
                     </div>
                     <div className="flex items-end gap-2">
+                        <div className="space-y-1">
+                            <Label htmlFor="view-year" className="text-xs text-muted-foreground">Năm xem</Label>
+                            <Input
+                                id="view-year"
+                                value={viewYear}
+                                onChange={(e) => setViewYear(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
+                                className="h-10 w-24"
+                                inputMode="numeric"
+                            />
+                        </div>
                         <Button className="h-10" onClick={fetchChart} disabled={isChartLoading || isDialogOpen}>
                             {isChartLoading ? 'Đang lập...' : 'Lập lại lá số'}
                         </Button>
@@ -548,7 +807,7 @@ export default function TuViPage() {
                 {chart && (
                     <div className="space-y-4">
                         <div>
-                            <h2 className="text-base font-semibold text-mystic-gold mb-3">Lá Số 12 Cung (Grid)</h2>
+                            
                             <div className="overflow-x-auto">
                                 <div className="grid grid-cols-4 gap-3 min-w-[920px]">
                                     {PALACE_GRID_ORDER.map((branch, cellIndex) => {
@@ -581,6 +840,26 @@ export default function TuViPage() {
                                                         <p><span className="font-semibold">Âm dương:</span> {amDuongGenderLabel}</p>
                                                         <p><span className="font-semibold">Mệnh:</span> {chart.core.menhBranch} | <span className="font-semibold">Thân:</span> {chart.core.thanBranch}</p>
                                                         <p><span className="font-semibold">Cục:</span> {chart.core.cuc.name} ({chart.core.cuc.value})</p>
+                                                        <p>
+                                                            <span className="font-semibold">Bản mệnh:</span>{' '}
+                                                            {chart.core.banMenh?.napAm
+                                                                ? `${chart.core.banMenh.napAm} (${chart.core.banMenh.yNghia ?? chart.core.banMenh.element})`
+                                                                : (chart.core.banMenh ? `${chart.core.banMenh.element} (${chart.core.banMenh.value})` : '-')}
+                                                        </p>
+                                                        <p><span className="font-semibold">Chủ Mệnh:</span> {chart.core.chuMenh || '-'}</p>
+                                                        <p><span className="font-semibold">Chủ Thân:</span> {chart.core.chuThan || '-'}</p>
+                                                        <p>
+                                                            <span className="font-semibold">Lai nhân cung:</span>{' '}
+                                                            {chart.core.laiNhanCung?.roles && chart.core.laiNhanCung.roles.length > 0
+                                                                ? `${chart.core.laiNhanCung.roles.join(' / ')}`
+                                                                : '-'}
+                                                        </p>
+                                                        <p>
+                                                            <span className="font-semibold">Cân lượng:</span>{' '}
+                                                            {chart.core.canLuong
+                                                                ? `${chart.core.canLuong.luong} lượng ${chart.core.canLuong.chi} chỉ`
+                                                                : '-'}
+                                                        </p>
                                                     </div>
 
                                                     <p className="text-xs text-slate-500">
@@ -611,7 +890,6 @@ export default function TuViPage() {
                                             );
                                         }
 
-                                        const isMenh = palace.index === chart.core.menh;
                                         const isThan = palace.index === chart.core.than;
                                         const { good, bad } = classifyMinorStars(palace.stars.minor);
                                         const element = BRANCH_ELEMENT[palace.branch] ?? '';
@@ -620,9 +898,19 @@ export default function TuViPage() {
                                         const locTonStar = locTonLabelByPalace.get(palace.index) ?? '';
                                         const ringStars = [thaiTueStar, locTonStar]
                                             .filter((name): name is string => Boolean(name))
-                                            .map((name) => ({ name, palace: palace.index }));
+                                            .map((name) => ({
+                                                name,
+                                                palace: palace.index,
+                                                brightness: resolveMinorBrightnessByIndex(name, palace.index),
+                                            }));
                                         const { good: ringGood, bad: ringBad } = classifyMinorStars(ringStars);
                                         const elementStyle = ELEMENT_STYLE[element] ?? { text: 'text-slate-700', border: '', bg: '' };
+                                        const dvRole = dvRoleByPalace.get(palace.index) ?? '';
+                                        const lnRole = lnRoleByPalace.get(palace.index) ?? '';
+                                        const dvAgeRange = dvAgeRangeByPalace.get(palace.index);
+                                        const hasTriet = trietPalaces.has(palace.index);
+                                        const hasTuan = tuanPalaces.has(palace.index);
+                                        const voidMarks = [hasTuan ? 'Tuần' : '', hasTriet ? 'Triệt' : ''].filter(Boolean).join(' - ');
 
                                     return (
                                         <div
@@ -630,8 +918,8 @@ export default function TuViPage() {
                                             className="cung-view h-full rounded-lg border border-mystic-gold/25 bg-[#F1ECE3] shadow-sm overflow-hidden flex flex-col"
                                             id={`cung-${palace.index}`}
                                         >
-                                            <div className="cung-top border-b border-mystic-gold/15 bg-amber-50/40 px-2 py-2">
-                                                <div className="view-cung-top grid grid-cols-[52px_1fr_42px] gap-2 items-start">
+                                            <div className="cung-top h-[96px] overflow-hidden border-b border-mystic-gold/15 bg-amber-50/40 px-2 py-2">
+                                                <div className="view-cung-top h-full grid grid-cols-[52px_1fr_42px] gap-2 items-start">
                                                     <div>
                                                         <p className={`text-[11px] leading-4 font-semibold ${elementStyle.text}`}>{palace.branch}</p>
                                                         <p className={`text-[11px] leading-4 font-medium ${elementStyle.text}`}>+{element}</p>
@@ -641,7 +929,6 @@ export default function TuViPage() {
                                                         <div className="flex items-center justify-center gap-1">
                                                             <p className={`text-[11px] font-bold ${elementStyle.text}`}>{palace.role}</p>
                                                             {isThan && <span className="text-[11px] font-bold text-red-600">&lt;Thân&gt;</span>}
-                                                            {isMenh && <span className="text-[11px] font-bold text-amber-700">&lt;Mệnh&gt;</span>}
                                                         </div>
                                                         {palace.stars.main.length > 0 ? (
                                                             palace.stars.main.map((star) => (
@@ -658,8 +945,10 @@ export default function TuViPage() {
                                                     </div>
 
                                                     <div className="view-cung-dai-van text-right">
-                                                        <p className="text-[11px] leading-4 font-semibold text-slate-600">#{palace.index}</p>
-                                                        <p className="text-[11px] leading-4 text-slate-500">Th.{(palace.index % 12) + 1}</p>
+                                                        <p className="text-[11px] leading-4 font-semibold text-slate-600">Đại vận</p>
+                                                        <p className="text-[11px] leading-4 text-slate-500">
+                                                            {dvAgeRange ? `${dvAgeRange.start}-${dvAgeRange.end}` : '-'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -672,7 +961,7 @@ export default function TuViPage() {
                                                                 key={`good-${palace.index}-${star.name}`}
                                                                 className={`text-[11px] leading-4 ${getMinorStarTextClass(star.name, false)}`}
                                                             >
-                                                                {star.name}
+                                                                {formatMinorStarDisplayName(star.name)}{getMinorBrightnessTag(star)}
                                                             </div>
                                                         ))
                                                     ) : (
@@ -681,7 +970,7 @@ export default function TuViPage() {
 
                                                     {ringGood.map((star, idx) => (
                                                         <div key={`ring-good-${palace.index}-${star.name}-${idx}`} className={`text-[11px] leading-4 ${getMinorStarTextClass(star.name, false)}`}>
-                                                            {star.name}
+                                                            {formatMinorStarDisplayName(star.name)}{getMinorBrightnessTag(star)}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -692,7 +981,7 @@ export default function TuViPage() {
                                                                 key={`bad-${palace.index}-${star.name}`}
                                                                 className={`text-[11px] leading-4 font-semibold ${getMinorStarTextClass(star.name, true)}`}
                                                             >
-                                                                {star.name}
+                                                                {formatMinorStarDisplayName(star.name)}{getMinorBrightnessTag(star)}
                                                             </div>
                                                         ))
                                                     ) : (
@@ -701,16 +990,25 @@ export default function TuViPage() {
 
                                                     {ringBad.map((star, idx) => (
                                                         <div key={`ring-bad-${palace.index}-${star.name}-${idx}`} className={`text-[11px] leading-4 font-semibold ${getMinorStarTextClass(star.name, true)}`}>
-                                                            {star.name}
+                                                            {formatMinorStarDisplayName(star.name)}{getMinorBrightnessTag(star)}
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
 
-                                            <div className="cung-bottom border-t border-mystic-gold/15 bg-amber-50/30 px-2 py-1.5 flex items-center justify-between text-[11px] text-slate-600">
-                                                <span>ĐV.{palace.role.slice(0, 4).toUpperCase()}</span>
+                                            <div className="cung-bottom h-[28px] overflow-hidden border-t border-mystic-gold/15 bg-amber-50/30 px-2 py-1.5 flex items-center justify-between text-[11px] text-slate-600">
+                                                <span>{dvRole ? `dv.${dvRole}` : ''}</span>
                                                 <span>{trangSinhLabel || palace.branch}</span>
-                                                <span>LN.{palace.role.slice(0, 4).toUpperCase()}</span>
+                                                <span>{lnRole ? `ln.${lnRole}` : ''}</span>
+                                            </div>
+                                            <div
+                                                className={`h-[22px] border-t px-2 py-1 text-center text-[10px] tracking-wide ${
+                                                    voidMarks
+                                                        ? 'border-black bg-black font-bold uppercase text-white'
+                                                        : 'border-mystic-gold/15 bg-amber-50/30 text-slate-500'
+                                                }`}
+                                            >
+                                                {voidMarks || ''}
                                             </div>
                                         </div>
                                     );

@@ -89,6 +89,9 @@ export async function GET(request: NextRequest) {
         const gender = normalizeGender(request.nextUrl.searchParams.get('gender'));
         const timezoneParam = request.nextUrl.searchParams.get('timezone');
         const timezone = timezoneParam ? Number(timezoneParam) : 7;
+        const viewYearParam = request.nextUrl.searchParams.get('viewYear');
+        const parsedViewYear = viewYearParam ? Number.parseInt(viewYearParam, 10) : Number.NaN;
+        const viewYear = Number.isFinite(parsedViewYear) ? parsedViewYear : undefined;
 
         const engine = new TuViEngine(timezone);
         const input = TuViEngine.fromProfileInput({
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
             timezone,
         });
 
-        const chart = engine.generateChart(input);
+        const chart = engine.generateChart(input, { viewYear });
         const probe = buildLunarTypescriptProbe({
             birthDateIso: toIsoDate(profile.birth_date),
             hour: input.hour ?? 12,

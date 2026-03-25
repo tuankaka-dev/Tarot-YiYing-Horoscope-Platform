@@ -150,8 +150,8 @@ const VAN_TINH_BY_STEM: Record<number, number> = {
   5: 9,
   6: 11,
   7: 0,
-  8: 2,
-  9: 3,
+  8: 9,
+  9: 1,
 };
 
 const HOA_CAI_BY_BRANCH: Record<number, number> = {
@@ -298,8 +298,60 @@ const TU_HOA_BY_STEM: Record<number, Record<'Lộc' | 'Quyền' | 'Khoa' | 'Kỵ
   5: { Lộc: 'Vũ Khúc', Quyền: 'Tham Lang', Khoa: 'Thiên Lương', Kỵ: 'Văn Khúc' },
   6: { Lộc: 'Thái Dương', Quyền: 'Vũ Khúc', Khoa: 'Thái Âm', Kỵ: 'Thiên Đồng' },
   7: { Lộc: 'Cự Môn', Quyền: 'Thái Dương', Khoa: 'Văn Khúc', Kỵ: 'Văn Xương' },
-  8: { Lộc: 'Thiên Lương', Quyền: 'Tử Vi', Khoa: 'Thiên Phủ', Kỵ: 'Vũ Khúc' },
+  8: { Lộc: 'Thiên Lương', Quyền: 'Tử Vi', Khoa: 'Tả Phù', Kỵ: 'Vũ Khúc' },
   9: { Lộc: 'Phá Quân', Quyền: 'Cự Môn', Khoa: 'Thái Âm', Kỵ: 'Tham Lang' },
+};
+
+const LUU_THIEN_KHOI_BY_STEM: Record<number, number> = {
+  0: 1,
+  1: 0,
+  2: 11,
+  3: 11,
+  4: 1,
+  5: 0,
+  6: 2,
+  7: 2,
+  8: 3,
+  9: 3,
+};
+
+const LUU_THIEN_VIET_BY_STEM: Record<number, number> = {
+  0: 7,
+  1: 8,
+  2: 9,
+  3: 9,
+  4: 7,
+  5: 8,
+  6: 6,
+  7: 6,
+  8: 5,
+  9: 5,
+};
+
+const LUU_VAN_XUONG_BY_STEM: Record<number, number> = {
+  0: 5,
+  1: 6,
+  2: 8,
+  3: 9,
+  4: 8,
+  5: 9,
+  6: 11,
+  7: 0,
+  8: 9,
+  9: 1,
+};
+
+const LUU_VAN_KHUC_BY_STEM: Record<number, number> = {
+  0: 11,
+  1: 5,
+  2: 6,
+  3: 8,
+  4: 6,
+  5: 8,
+  6: 2,
+  7: 3,
+  8: 9,
+  9: 0,
 };
 
 const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
@@ -307,7 +359,7 @@ const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
   
   'Tử Vi':      ['B', 'B', 'M', 'B', 'V', 'M', 'M', 'B', 'M', 'B', 'V', 'B'],
   'Liêm Trinh': ['V', 'H', 'V', 'H', 'M', 'H', 'V', 'Đ', 'V', 'H', 'M', 'H'],
-  'Thiên Đồng': ['V', 'H', 'M', 'Đ', 'H', 'H', 'H', 'H', 'M', 'B', 'H', 'B'],
+  'Thiên Đồng': ['V', 'H', 'M', 'Đ', 'H', 'Đ', 'H', 'H', 'M', 'H', 'H', 'B'],
   'Vũ Khúc':    ['V', 'M', 'V', 'Đ', 'M', 'H', 'V', 'M', 'V', 'Đ', 'M', 'H'],
   'Thái Dương': ['H', 'H', 'V', 'V', 'V', 'M', 'M', 'Đ', 'H', 'H', 'H', 'H'],
   'Thái Âm':    ['M', 'M', 'H', 'H', 'H', 'H', 'H', 'Đ', 'V', 'M', 'M', 'M'],
@@ -315,10 +367,29 @@ const STAR_STRENGTH: Record<string, readonly StrengthSymbol[]> = {
   'Thiên Phủ':  ['M', 'B', 'M', 'Đ', 'V', 'Đ', 'M', 'Đ', 'M', 'Đ', 'V', 'B'],
   'Tham Lang':  ['H', 'M', 'Đ', 'H', 'V', 'H', 'H', 'M', 'Đ', 'H', 'V', 'H'],
   'Cự Môn':     ['M', 'H', 'V', 'M', 'H', 'H', 'M', 'H', 'V', 'M', 'H', 'Đ'],
-  'Thiên Tướng':['M', 'Đ', 'M', 'H', 'V', 'Đ', 'M', 'Đ', 'M', 'H', 'V', 'Đ'],
+  'Thiên Tướng':['M', 'Đ', 'M', 'H', 'V', 'Đ', 'V', 'Đ', 'M', 'H', 'V', 'Đ'],
   'Thiên Lương':['V', 'Đ', 'M', 'V', 'M', 'H', 'M', 'Đ', 'M', 'H', 'M', 'H'],
   'Thất Sát':   ['M', 'H', 'M', 'H', 'Đ', 'V', 'M', 'Đ', 'M', 'H', 'H', 'V'],
-  'Phá Quân':   ['M', 'V', 'H', 'H', 'V', 'H', 'M', 'V', 'Đ', 'H', 'V', 'H'],
+  'Phá Quân':   ['M', 'V', 'H', 'H', 'Đ', 'H', 'M', 'V', 'Đ', 'H', 'V', 'H'],
+};
+
+const MINOR_STAR_STRENGTH: Record<string, Partial<Record<number, StrengthSymbol>>> = {
+  'Kình Dương': { 1: 'M', 4: 'M', 7: 'M', 10: 'M' },
+  'Đà La': { 1: 'M', 4: 'M', 7: 'M', 10: 'M' },
+  'Địa Không': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+  'Địa Kiếp': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+  'Hỏa Tinh': { 2: 'Đ', 5: 'Đ', 6: 'Đ', 8: 'Đ' },
+  'Linh Tinh': { 2: 'Đ', 5: 'Đ', 6: 'Đ', 8: 'Đ' },
+  'Văn Xương': { 1: 'Đ', 3: 'Đ', 5: 'Đ', 7: 'Đ', 9: 'Đ', 11: 'Đ' },
+  'Văn Khúc': { 1: 'Đ', 3: 'Đ', 5: 'Đ', 7: 'Đ', 9: 'Đ', 11: 'Đ' },
+  'Hóa Kỵ': { 0: 'Đ', 11: 'Đ' },
+  'Lộc Tồn': { 2: 'Đ', 5: 'Đ', 8: 'Đ', 11: 'Đ' },
+  'Thiên Mã': { 2: 'Đ', 8: 'Đ' },
+  'Thanh Long': { 4: 'Đ' },
+  'Phượng Các': { 9: 'Đ' },
+  'Thiên Khốc': { 0: 'Đ', 6: 'Đ' },
+  'Thiên Hư': { 0: 'Đ', 6: 'Đ' },
+  'Đào Hoa': { 0: 'H', 3: 'M' },
 };
 const STRENGTH_LABEL: Record<StrengthSymbol, string> = {
   M: 'Miếu',
@@ -362,6 +433,201 @@ const TUVI_THIENPHU_MAP: Record<number, number> = {
   11: 5,
 };
 
+const CHU_MENH_BY_BRANCH: Record<number, string> = {
+  0: 'Tham Lang',
+  1: 'Cự Môn',
+  2: 'Lộc Tồn',
+  3: 'Văn Khúc',
+  4: 'Liêm Trinh',
+  5: 'Vũ Khúc',
+  6: 'Phá Quân',
+  7: 'Vũ Khúc',
+  8: 'Liêm Trinh',
+  9: 'Văn Khúc',
+  10: 'Lộc Tồn',
+  11: 'Cự Môn',
+};
+
+const CHU_THAN_BY_BRANCH: Record<number, string> = {
+  0: 'Linh Tinh',
+  1: 'Thiên Tướng',
+  2: 'Thiên Lương',
+  3: 'Thiên Đồng',
+  4: 'Văn Xương',
+  5: 'Thiên Cơ',
+  6: 'Hỏa Tinh',
+  7: 'Thiên Tướng',
+  8: 'Thiên Lương',
+  9: 'Thiên Đồng',
+  10: 'Văn Xương',
+  11: 'Thiên Cơ',
+};
+
+const CAN_LUONG_MONTH_TENTHS: Record<number, number> = {
+  1: 6,
+  2: 7,
+  3: 18,
+  4: 9,
+  5: 5,
+  6: 16,
+  7: 9,
+  8: 15,
+  9: 18,
+  10: 8,
+  11: 9,
+  12: 5,
+};
+
+const CAN_LUONG_HOUR_TENTHS_BY_BRANCH: Record<number, number> = {
+  0: 16,
+  1: 6,
+  2: 7,
+  3: 10,
+  4: 9,
+  5: 16,
+  6: 10,
+  7: 8,
+  8: 8,
+  9: 9,
+  10: 6,
+  11: 6,
+};
+
+const CAN_LUONG_DAY_TENTHS: number[] = [
+  5, 10, 8, 15, 16,
+  15, 8, 16, 8, 16,
+  9, 17, 8, 17, 10,
+  8, 9, 18, 5, 15,
+  10, 9, 8, 9, 15,
+  18, 7, 8, 16, 6,
+];
+
+const CAN_LUONG_YEAR_TENTHS_BY_CAN_CHI: Record<string, number> = {
+  'Giáp Tý': 12,
+  'Ất Sửu': 9,
+  'Bính Dần': 6,
+  'Đinh Mão': 7,
+  'Mậu Thìn': 12,
+  'Kỷ Tỵ': 5,
+  'Canh Ngọ': 9,
+  'Tân Mùi': 8,
+  'Nhâm Thân': 7,
+  'Quý Dậu': 8,
+  'Giáp Tuất': 15,
+  'Ất Hợi': 9,
+  'Bính Tý': 16,
+  'Đinh Sửu': 8,
+  'Mậu Dần': 8,
+  'Kỷ Mão': 19,
+  'Canh Thìn': 12,
+  'Tân Tỵ': 6,
+  'Nhâm Ngọ': 8,
+  'Quý Mùi': 7,
+  'Giáp Thân': 5,
+  'Ất Dậu': 15,
+  'Bính Tuất': 6,
+  'Đinh Hợi': 16,
+  'Mậu Tý': 15,
+  'Kỷ Sửu': 8,
+  'Canh Dần': 9,
+  'Tân Mão': 12,
+  'Nhâm Thìn': 10,
+  'Quý Tỵ': 7,
+  'Giáp Ngọ': 15,
+  'Ất Mùi': 6,
+  'Bính Thân': 5,
+  'Đinh Dậu': 14,
+  'Mậu Tuất': 14,
+  'Kỷ Hợi': 9,
+  'Canh Tý': 7,
+  'Tân Sửu': 7,
+  'Nhâm Dần': 9,
+  'Quý Mão': 12,
+  'Giáp Thìn': 8,
+  'Ất Tỵ': 7,
+  'Bính Ngọ': 13,
+  'Đinh Mùi': 5,
+  'Mậu Thân': 14,
+  'Kỷ Dậu': 8,
+  'Canh Tuất': 9,
+  'Tân Hợi': 17,
+  'Nhâm Tý': 5,
+  'Quý Sửu': 7,
+  'Giáp Dần': 12,
+  'Ất Mão': 8,
+  'Bính Thìn': 12,
+  'Đinh Tỵ': 6,
+  'Mậu Ngọ': 19,
+  'Kỷ Mùi': 6,
+  'Canh Thân': 8,
+  'Tân Dậu': 16,
+  'Nhâm Tuất': 10,
+  'Quý Hợi': 7,
+};
+
+const NAP_AM_DATABASE: Record<string, { napAm: string; yNghia: string }> = {
+  'Giáp Tý': { napAm: 'Hải Trung Kim', yNghia: 'Vàng trong biển' },
+  'Ất Sửu': { napAm: 'Hải Trung Kim', yNghia: 'Vàng trong biển' },
+  'Bính Dần': { napAm: 'Lư Trung Hỏa', yNghia: 'Lửa trong lò' },
+  'Đinh Mão': { napAm: 'Lư Trung Hỏa', yNghia: 'Lửa trong lò' },
+  'Mậu Thìn': { napAm: 'Đại Lâm Mộc', yNghia: 'Gỗ rừng già' },
+  'Kỷ Tỵ': { napAm: 'Đại Lâm Mộc', yNghia: 'Gỗ rừng già' },
+  'Canh Ngọ': { napAm: 'Lộ Bàng Thổ', yNghia: 'Đất đường đi' },
+  'Tân Mùi': { napAm: 'Lộ Bàng Thổ', yNghia: 'Đất đường đi' },
+  'Nhâm Thân': { napAm: 'Kiếm Phong Kim', yNghia: 'Vàng mũi kiếm' },
+  'Quý Dậu': { napAm: 'Kiếm Phong Kim', yNghia: 'Vàng mũi kiếm' },
+  'Giáp Tuất': { napAm: 'Sơn Đầu Hỏa', yNghia: 'Lửa trên núi' },
+  'Ất Hợi': { napAm: 'Sơn Đầu Hỏa', yNghia: 'Lửa trên núi' },
+  'Bính Tý': { napAm: 'Giản Hạ Thủy', yNghia: 'Nước dưới khe' },
+  'Đinh Sửu': { napAm: 'Giản Hạ Thủy', yNghia: 'Nước dưới khe' },
+  'Mậu Dần': { napAm: 'Thành Đầu Thổ', yNghia: 'Đất trên thành' },
+  'Kỷ Mão': { napAm: 'Thành Đầu Thổ', yNghia: 'Đất trên thành' },
+  'Canh Thìn': { napAm: 'Bạch Lạp Kim', yNghia: 'Vàng chân đèn' },
+  'Tân Tỵ': { napAm: 'Bạch Lạp Kim', yNghia: 'Vàng chân đèn' },
+  'Nhâm Ngọ': { napAm: 'Dương Liễu Mộc', yNghia: 'Gỗ cây liễu' },
+  'Quý Mùi': { napAm: 'Dương Liễu Mộc', yNghia: 'Gỗ cây liễu' },
+  'Giáp Thân': { napAm: 'Tuyền Trung Thủy', yNghia: 'Nước trong suối' },
+  'Ất Dậu': { napAm: 'Tuyền Trung Thủy', yNghia: 'Nước trong suối' },
+  'Bính Tuất': { napAm: 'Ốc Thượng Thổ', yNghia: 'Đất nóc nhà' },
+  'Đinh Hợi': { napAm: 'Ốc Thượng Thổ', yNghia: 'Đất nóc nhà' },
+  'Mậu Tý': { napAm: 'Tích Lịch Hỏa', yNghia: 'Lửa sấm sét' },
+  'Kỷ Sửu': { napAm: 'Tích Lịch Hỏa', yNghia: 'Lửa sấm sét' },
+  'Canh Dần': { napAm: 'Tùng Bách Mộc', yNghia: 'Gỗ cây tùng bách' },
+  'Tân Mão': { napAm: 'Tùng Bách Mộc', yNghia: 'Gỗ cây tùng bách' },
+  'Nhâm Thìn': { napAm: 'Trường Lưu Thủy', yNghia: 'Nước dòng sông dài' },
+  'Quý Tỵ': { napAm: 'Trường Lưu Thủy', yNghia: 'Nước dòng sông dài' },
+  'Giáp Ngọ': { napAm: 'Sa Trung Kim', yNghia: 'Vàng trong cát' },
+  'Ất Mùi': { napAm: 'Sa Trung Kim', yNghia: 'Vàng trong cát' },
+  'Bính Thân': { napAm: 'Sơn Hạ Hỏa', yNghia: 'Lửa dưới núi' },
+  'Đinh Dậu': { napAm: 'Sơn Hạ Hỏa', yNghia: 'Lửa dưới núi' },
+  'Mậu Tuất': { napAm: 'Bình Địa Mộc', yNghia: 'Gỗ đồng bằng' },
+  'Kỷ Hợi': { napAm: 'Bình Địa Mộc', yNghia: 'Gỗ đồng bằng' },
+  'Canh Tý': { napAm: 'Bích Thượng Thổ', yNghia: 'Đất trên tường' },
+  'Tân Sửu': { napAm: 'Bích Thượng Thổ', yNghia: 'Đất trên tường' },
+  'Nhâm Dần': { napAm: 'Kim Bạch Kim', yNghia: 'Vàng thỏi' },
+  'Quý Mão': { napAm: 'Kim Bạch Kim', yNghia: 'Vàng thỏi' },
+  'Giáp Thìn': { napAm: 'Phúc Đăng Hỏa', yNghia: 'Lửa đèn dầu' },
+  'Ất Tỵ': { napAm: 'Phúc Đăng Hỏa', yNghia: 'Lửa đèn dầu' },
+  'Bính Ngọ': { napAm: 'Thiên Hà Thủy', yNghia: 'Nước mưa' },
+  'Đinh Mùi': { napAm: 'Thiên Hà Thủy', yNghia: 'Nước mưa' },
+  'Mậu Thân': { napAm: 'Đại Trạch Thổ', yNghia: 'Đất bãi lớn' },
+  'Kỷ Dậu': { napAm: 'Đại Trạch Thổ', yNghia: 'Đất bãi lớn' },
+  'Canh Tuất': { napAm: 'Thoa Xuyến Kim', yNghia: 'Vàng trang sức' },
+  'Tân Hợi': { napAm: 'Thoa Xuyến Kim', yNghia: 'Vàng trang sức' },
+  'Nhâm Tý': { napAm: 'Tang Đố Mộc', yNghia: 'Gỗ cây dâu' },
+  'Quý Sửu': { napAm: 'Tang Đố Mộc', yNghia: 'Gỗ cây dâu' },
+  'Giáp Dần': { napAm: 'Đại Khê Thủy', yNghia: 'Nước khe lớn' },
+  'Ất Mão': { napAm: 'Đại Khê Thủy', yNghia: 'Nước khe lớn' },
+  'Bính Thìn': { napAm: 'Sa Trung Thổ', yNghia: 'Đất trong cát' },
+  'Đinh Tỵ': { napAm: 'Sa Trung Thổ', yNghia: 'Đất trong cát' },
+  'Mậu Ngọ': { napAm: 'Thiên Thượng Hỏa', yNghia: 'Lửa trên trời' },
+  'Kỷ Mùi': { napAm: 'Thiên Thượng Hỏa', yNghia: 'Lửa trên trời' },
+  'Canh Thân': { napAm: 'Thạch Lựu Mộc', yNghia: 'Gỗ cây lựu' },
+  'Tân Dậu': { napAm: 'Thạch Lựu Mộc', yNghia: 'Gỗ cây lựu' },
+  'Nhâm Tuất': { napAm: 'Đại Hải Thủy', yNghia: 'Nước biển lớn' },
+  'Quý Hợi': { napAm: 'Đại Hải Thủy', yNghia: 'Nước biển lớn' },
+};
+
 interface TuViInput {
   day: number;
   month: number;
@@ -379,6 +645,12 @@ interface TuViProfileInput {
   gender: Gender;
   timezone?: number;
 }
+
+interface GenerateChartOptions {
+  viewYear?: number;
+}
+
+type BanMenhElement = 'Kim' | 'Thủy' | 'Hỏa' | 'Thổ' | 'Mộc';
 
 type StarItem = { name: string; palace: number; brightness?: string };
 
@@ -414,7 +686,7 @@ export class TuViEngine {
     };
   }
 
-  generateChart(input: TuViInput) {
+  generateChart(input: TuViInput, options?: GenerateChartOptions) {
     const timezone = input.timezone ?? this.timezone;
     const solar = {
       day: input.day,
@@ -453,6 +725,7 @@ export class TuViEngine {
     const menh = this.normalizeIndex(2 + lunarChart.month - 1 - hourChi);
     const than = this.normalizeIndex(2 + lunarChart.month - 1 + hourChi);
     const palaceRoles = this.buildPalaceRolesFromMenh(menh);
+    const palaceStems = this.buildPalaceStemsByYearStem(lunarChart.yearStem);
     const cuc = this.resolveCuc(lunarChart.yearStem, menh);
     const direction = this.resolveDirection(lunarChart.yearStem, input.gender);
 
@@ -474,7 +747,13 @@ export class TuViEngine {
     const tuan = this.resolveTuan(lunarChart.yearStem, lunarChart.yearChi);
 
     const tuHoa = this.resolveTuHoa(lunarChart.yearStem, majorStars, minorStars);
-    const allMinorStars = [...minorStars.fixed, ...tuHoa];
+    const normalizedViewYear = Number.isInteger(options?.viewYear)
+      ? (options?.viewYear as number)
+      : lunarChart.year;
+    const viewYearStem = ((normalizedViewYear + 6) % 10 + 10) % 10;
+    const viewYearChi = ((normalizedViewYear + 8) % 12 + 12) % 12;
+    const luuStars = this.placeLuuStars(viewYearStem, viewYearChi, majorStars, minorStars);
+    const allMinorStars = [...minorStars.fixed, ...tuHoa, ...luuStars];
 
     const palaces = BRANCHES.map((branch, idx) => {
       const mainAtPalace = majorStars.all
@@ -484,10 +763,17 @@ export class TuViEngine {
           brightness: this.resolveBrightness(s.name, idx),
         }));
 
-      const minorAtPalace = allMinorStars.filter((s) => s.palace === idx);
+      const minorAtPalace = allMinorStars
+        .filter((s) => s.palace === idx)
+        .map((s) => ({
+          ...s,
+          brightness: this.resolveMinorBrightness(s.name, idx),
+        }));
       return {
         index: idx,
         branch,
+        stemIndex: palaceStems[idx],
+        stemName: STEMS[palaceStems[idx]],
         role: palaceRoles[idx],
         stars: {
           main: mainAtPalace,
@@ -514,6 +800,13 @@ export class TuViEngine {
         gender: input.gender,
       },
       preProcessing: {
+        viewYear: {
+          year: normalizedViewYear,
+          yearStemIndex: viewYearStem,
+          yearStemName: STEMS[viewYearStem],
+          yearChiIndex: viewYearChi,
+          yearChiName: BRANCHES[viewYearChi],
+        },
         lunar: {
           day: lunarChart.day,
           month: lunarChart.month,
@@ -549,7 +842,12 @@ export class TuViEngine {
         than,
         menhBranch: BRANCHES[menh],
         thanBranch: BRANCHES[than],
+        chuMenh: this.resolveChuMenhByMenhBranch(menh),
+        chuThan: this.resolveChuThanByYearChi(lunarChart.yearChi),
         cuc,
+        banMenh: this.resolveBanMenhByYear(lunarChart.yearStem, lunarChart.yearChi),
+        laiNhanCung: this.resolveLaiNhanCung(lunarChart.yearStem, palaceRoles, palaceStems),
+        canLuong: this.resolveCanLuong(lunarChart.yearStem, lunarChart.yearChi, lunarChart.month, lunarChart.day, hourChi),
       },
       voidsAndStrength: {
         triet: {
@@ -741,6 +1039,53 @@ export class TuViEngine {
     return transforms;
   }
 
+  private placeLuuStars(
+    viewYearStem: number,
+    viewYearChi: number,
+    major: { all: StarItem[] },
+    minor: { fixed: StarItem[] }
+  ): StarItem[] {
+    const luuLocTon = LOC_TON_BY_STEM[viewYearStem];
+    const luuThaiTue = this.normalizeIndex(viewYearChi);
+    const luuTangMon = this.normalizeIndex(luuThaiTue + 2);
+    const luuKhoi = LUU_THIEN_KHOI_BY_STEM[viewYearStem];
+    const luuViet = LUU_THIEN_VIET_BY_STEM[viewYearStem];
+    const luuDaoHoa = DAO_HOA_BY_BRANCH[viewYearChi];
+    const luuHongLoan = this.normalizeIndex(3 - viewYearChi);
+    const luuVanXuong = LUU_VAN_XUONG_BY_STEM[viewYearStem];
+    const luuVanKhuc = LUU_VAN_KHUC_BY_STEM[viewYearStem];
+
+    const luuTuHoaRules = TU_HOA_BY_STEM[viewYearStem];
+    const allStars = [...major.all, ...minor.fixed];
+    const luuTuHoa: StarItem[] = [];
+
+    (Object.keys(luuTuHoaRules) as Array<keyof typeof luuTuHoaRules>).forEach((transformName) => {
+      const sourceStarName = luuTuHoaRules[transformName];
+      const sourceStar = allStars.find((s) => s.name === sourceStarName);
+      if (sourceStar) {
+        luuTuHoa.push({ name: `Lưu Hóa ${transformName}`, palace: sourceStar.palace });
+      }
+    });
+
+    return [
+      { name: 'Lưu Lộc Tồn', palace: luuLocTon },
+      { name: 'Lưu Kình Dương', palace: this.normalizeIndex(luuLocTon + 1) },
+      { name: 'Lưu Thái Tuế', palace: luuThaiTue },
+      { name: 'Lưu Tang Môn', palace: luuTangMon },
+      { name: 'Lưu Bạch Hổ', palace: this.normalizeIndex(luuTangMon + 6) },
+      { name: 'Lưu Thiên Mã', palace: THIEN_MA_BY_BRANCH[viewYearChi] },
+      { name: 'Lưu Thiên Khốc', palace: this.normalizeIndex(6 - viewYearChi) },
+      { name: 'Lưu Thiên Hư', palace: this.normalizeIndex(6 + viewYearChi) },
+      { name: 'Lưu Thiên Khôi', palace: luuKhoi },
+      { name: 'Lưu Thiên Việt', palace: luuViet },
+      { name: 'Lưu Đào Hoa', palace: luuDaoHoa },
+      { name: 'Lưu Hồng Loan', palace: luuHongLoan },
+      { name: 'Lưu Văn Xương', palace: luuVanXuong },
+      { name: 'Lưu Văn Khúc', palace: luuVanKhuc },
+      ...luuTuHoa,
+    ];
+  }
+
   private buildCycles(yearChi: number, locTon: number, cucValue: number, direction: Direction) {
     const thaiTue = Array.from({ length: 12 }, (_, i) => this.normalizeIndex(yearChi + i));
     const bacSi = this.rotateFromStart(locTon, direction);
@@ -783,6 +1128,91 @@ export class TuViEngine {
     }
 
     return result;
+  }
+
+  private buildPalaceStemsByYearStem(yearStem: number): Record<number, number> {
+    // Ngũ Hổ Độn: an Can tháng Giêng tại cung Dần theo Can năm.
+    const startStemAtDan =
+      yearStem === 0 || yearStem === 5 ? 2 :
+      yearStem === 1 || yearStem === 6 ? 4 :
+      yearStem === 2 || yearStem === 7 ? 6 :
+      yearStem === 3 || yearStem === 8 ? 8 :
+      0;
+
+    const stemsByPalace: Record<number, number> = {};
+    for (let palaceIndex = 0; palaceIndex < 12; palaceIndex += 1) {
+      const offsetFromDan = this.normalizeIndex(palaceIndex - 2);
+      stemsByPalace[palaceIndex] = this.normalizeStemIndex(startStemAtDan + offsetFromDan);
+    }
+
+    return stemsByPalace;
+  }
+
+  private resolveLaiNhanCung(
+    yearStem: number,
+    palaceRoles: Record<number, string>,
+    palaceStems: Record<number, number>
+  ): { yearStemName: string; palaces: number[]; branches: string[]; roles: string[] } {
+    const matchedPalaces = Object.keys(palaceStems)
+      .map((key) => Number(key))
+      .filter((palaceIndex) => palaceStems[palaceIndex] === yearStem)
+      .sort((a, b) => a - b);
+
+    return {
+      yearStemName: STEMS[yearStem],
+      palaces: matchedPalaces,
+      branches: matchedPalaces.map((idx) => BRANCHES[idx]),
+      roles: matchedPalaces.map((idx) => palaceRoles[idx]),
+    };
+  }
+
+  private resolveChuMenhByMenhBranch(menhBranch: number): string {
+    return CHU_MENH_BY_BRANCH[this.normalizeIndex(menhBranch)] ?? '-';
+  }
+
+  private resolveChuThanByYearChi(yearChi: number): string {
+    return CHU_THAN_BY_BRANCH[this.normalizeIndex(yearChi)] ?? '-';
+  }
+
+  private resolveCanLuong(
+    yearStem: number,
+    yearChi: number,
+    lunarMonth: number,
+    lunarDay: number,
+    hourChi: number,
+  ): {
+    total: number;
+    luong: number;
+    chi: number;
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+  } {
+    const yearKey = `${STEMS[yearStem]} ${BRANCHES[yearChi]}`;
+    const yearTenths = CAN_LUONG_YEAR_TENTHS_BY_CAN_CHI[yearKey] ?? 0;
+    const monthTenths = CAN_LUONG_MONTH_TENTHS[lunarMonth] ?? 0;
+    const dayTenths = CAN_LUONG_DAY_TENTHS[lunarDay - 1] ?? 0;
+    const hourTenths = CAN_LUONG_HOUR_TENTHS_BY_BRANCH[this.normalizeIndex(hourChi)] ?? 0;
+
+    const totalTenths = yearTenths + monthTenths + dayTenths + hourTenths;
+    const luong = Math.floor(totalTenths / 10);
+    const chi = totalTenths % 10;
+
+    return {
+      total: totalTenths / 10,
+      luong,
+      chi,
+      year: yearTenths / 10,
+      month: monthTenths / 10,
+      day: dayTenths / 10,
+      hour: hourTenths / 10,
+    };
+  }
+
+  private normalizeStemIndex(value: number): number {
+    const v = value % 10;
+    return v < 0 ? v + 10 : v;
   }
 
   private locateTuVi(lunarDay: number, cuc: number): number {
@@ -840,18 +1270,97 @@ export class TuViEngine {
     return STRENGTH_LABEL[symbol];
   }
 
-  private resolveTuan(yearStem: number, yearChi: number): [number, number] {
-    const key = `${yearStem}-${yearChi}`;
-    const specialCases: Record<string, [number, number]> = {
-      '2-10': [6, 7],
-    };
-
-    if (specialCases[key]) {
-      return specialCases[key];
+  private resolveMinorBrightness(starName: string, palaceIndex: number): string | undefined {
+    const normalizedName = starName.startsWith('Lưu ') ? starName.slice(4) : starName;
+    const rule = MINOR_STAR_STRENGTH[normalizedName];
+    if (!rule) {
+      return undefined;
     }
 
-    const start = this.normalizeIndex((yearChi + 2 - (yearStem % 2)) % 12);
+    const symbol = rule[palaceIndex];
+    if (!symbol) {
+      return undefined;
+    }
+
+    return STRENGTH_LABEL[symbol];
+  }
+
+  private resolveTuan(yearStem: number, yearChi: number): [number, number] {
+    // Tuần theo con nhà Giáp:
+    // giapHouseChi = (yearChi - yearStem + 12) % 12
+    // Giáp Tý -> Tuần Tuất/Hợi (10,11), Giáp Tuất -> Thân/Dậu (8,9), ...
+    const giapHouseChi = this.normalizeIndex(yearChi - yearStem);
+    const start = this.normalizeIndex(giapHouseChi - 2);
     return [start, this.normalizeIndex(start + 1)];
+  }
+
+  private resolveBanMenhByYear(yearStem: number, yearChi: number): {
+    value: 1 | 2 | 3 | 4 | 5;
+    element: BanMenhElement;
+    canChi: string;
+    napAm: string;
+    yNghia: string;
+  } {
+    const canChi = `${STEMS[yearStem]} ${BRANCHES[yearChi]}`;
+    const napAmEntry = NAP_AM_DATABASE[canChi];
+
+    if (napAmEntry) {
+      const element = this.resolveElementFromNapAm(napAmEntry.napAm);
+      const valueByElement: Record<BanMenhElement, 1 | 2 | 3 | 4 | 5> = {
+        Kim: 1,
+        Thủy: 2,
+        Hỏa: 3,
+        Thổ: 4,
+        Mộc: 5,
+      };
+
+      return {
+        value: valueByElement[element],
+        element,
+        canChi,
+        napAm: napAmEntry.napAm,
+        yNghia: napAmEntry.yNghia,
+      };
+    }
+
+    const stemValue = Math.floor(this.normalizeIndex(yearStem) / 2) + 1;
+
+    let chiValue = 2;
+    if (yearChi === 0 || yearChi === 1 || yearChi === 6 || yearChi === 7) {
+      chiValue = 0;
+    } else if (yearChi === 2 || yearChi === 3 || yearChi === 8 || yearChi === 9) {
+      chiValue = 1;
+    }
+
+    let value = (stemValue + chiValue) % 5;
+    if (value === 0) {
+      value = 5;
+    }
+
+    const elementByValue: Record<1 | 2 | 3 | 4 | 5, BanMenhElement> = {
+      1: 'Kim',
+      2: 'Thủy',
+      3: 'Hỏa',
+      4: 'Thổ',
+      5: 'Mộc',
+    };
+
+    return {
+      value: value as 1 | 2 | 3 | 4 | 5,
+      element: elementByValue[value as 1 | 2 | 3 | 4 | 5],
+      canChi,
+      napAm: `${elementByValue[value as 1 | 2 | 3 | 4 | 5]} (fallback)`,
+      yNghia: 'Không tìm thấy trong bảng Nạp Âm, dùng công thức dự phòng',
+    };
+  }
+
+  private resolveElementFromNapAm(napAm: string): BanMenhElement {
+    if (napAm.includes('Kim')) return 'Kim';
+    if (napAm.includes('Mộc')) return 'Mộc';
+    if (napAm.includes('Thủy')) return 'Thủy';
+    if (napAm.includes('Hỏa')) return 'Hỏa';
+    if (napAm.includes('Thổ')) return 'Thổ';
+    return 'Thổ';
   }
 
   private hourToBranchIndex(hour: number, minute: number): number {
