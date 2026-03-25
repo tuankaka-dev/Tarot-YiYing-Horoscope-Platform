@@ -67,6 +67,7 @@ export async function GET() {
                         id: user.id,
                         email: user.email || '',
                         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+                        credits: 0,
                         role: 'user',
                     },
                 });
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
                 id: user.id,
                 email: safeEmail,
                 full_name: typeof full_name === 'string' ? full_name : null,
+                credits: 0,
                 role: 'user',
                 ...(birthDate.hasValue && { birth_date: birthDate.value }),
                 ...(birthTime.hasValue && { birth_time: birthTime.value }),
@@ -172,6 +174,7 @@ export async function PUT(request: NextRequest) {
             create: {
                 id: user.id,
                 email: user.email || '',
+                credits: 0,
                 role: 'user',
                 full_name:
                     full_name !== undefined

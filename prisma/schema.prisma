@@ -16,7 +16,7 @@ model Profile {
   birth_date      DateTime? @db.Date
   birth_time      String?
   is_banned       Boolean   @default(false)
-  credits         Int       @default(10)
+  credits         Int       @default(0)
   is_premium      Boolean   @default(false)
   is_pro          Boolean   @default(false)
   premium_until   DateTime?

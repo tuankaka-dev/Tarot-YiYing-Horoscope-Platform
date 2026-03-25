@@ -119,20 +119,22 @@ export default function LandingPage() {
               </Button>
             </Link>
 
-            <div className="flex items-center gap-2">
-              <Link
-                href="/tuvi"
-                className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
-              >
-                Lập Lá Số Tử Vi
-              </Link>
-              <Link
-                href="/tarot"
-                className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
-              >
-                Trải Bài Tarot
-              </Link>
-            </div>
+            {user && (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/tuvi"
+                  className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
+                >
+                  Lập Lá Số Tử Vi
+                </Link>
+                <Link
+                  href="/tarot"
+                  className="inline-flex items-center rounded-full border border-mystic-gold/40 bg-white/70 px-3 py-1.5 text-xs font-semibold text-mystic-gold hover:bg-mystic-gold/10 transition-colors"
+                >
+                  Trải Bài Tarot
+                </Link>
+              </div>
+            )}
 
             {!user && (
               <Link href="/register">

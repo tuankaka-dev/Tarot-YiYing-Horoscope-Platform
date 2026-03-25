@@ -385,6 +385,11 @@ export default function DashboardPage() {
                                 Gieo Quẻ Mới
                             </Button>
                         </Link>
+                        <Link href="/tuvi" className="w-full sm:w-auto">
+                            <Button className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
+                                Xem Tử Vi
+                            </Button>
+                        </Link>
                         <Link href="/tarot" className="w-full sm:w-auto">
                             <Button className="w-full gap-2 bg-gradient-to-r from-fuchsia-700 to-violet-700 text-white">
                                 Trải Tarot
@@ -410,6 +415,11 @@ export default function DashboardPage() {
                             <Link href="/divine">
                                 <Button className="gap-2 bg-gradient-to-r from-mystic-gold/90 to-yellow-600/90 text-black font-semibold">
                                     Gieo Quẻ Đầu Tiên
+                                </Button>
+                            </Link>
+                            <Link href="/tuvi">
+                                <Button className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-semibold">
+                                    Xem Tử Vi
                                 </Button>
                             </Link>
                             <Link href="/tarot">
