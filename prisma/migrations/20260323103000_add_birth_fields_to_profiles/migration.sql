@@ -1,3 +1,0 @@
-ALTER TABLE "profiles"
-ADD COLUMN IF NOT EXISTS "birth_date" TEXT,
-ADD COLUMN IF NOT EXISTS "birth_time" TEXT;

@@ -88,7 +88,7 @@ async function main() {
     for (const hex of hexagrams) {
         const hexData = {
             ...hex,
-            image_url: `https://pfdhweyxmvbytokajslj.supabase.co/storage/v1/object/public/64_QUE/${hex.id}.png`
+            image_url: `https://YOUR_SUPABASE_URL.supabase.co/storage/v1/object/public/64_QUE/${hex.id}.png`
         };
         
         await prisma.hexagram.upsert({
